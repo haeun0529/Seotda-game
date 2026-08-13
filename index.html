@@ -35,6 +35,14 @@
   .duel-x { font-size: 22px; color: #a8c9b8; }
   .replay-box { background: #4a1f1f; border: 2px solid #e05d5d; }
   .replay-btn { background: #e05d5d; color: white; margin-top: 16px; }
+  .custom-btn { background: #7a5cf2; color: white; }
+  #customForm { display: none; background: #234a37; border-radius: 12px; padding: 20px; margin: 0 auto 30px; max-width: 900px; }
+  #customForm h2 { margin: 0 0 16px; font-size: 15px; color: #f2c94c; }
+  .custom-row { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+  .custom-row .label { width: 70px; font-size: 13px; color: #a8c9b8; text-align: right; }
+  .custom-row select { padding: 4px 6px; border-radius: 4px; border: none; }
+  .custom-row label.gwang-check { font-size: 12px; color: #f2c94c; display: flex; align-items: center; gap: 3px; }
+  #customForm .apply-btn { background: #f2c94c; margin-top: 10px; }
 </style>
 </head>
 <body>
@@ -42,8 +50,10 @@
   <div class="sub">카드 분배 → 각자 카드 1장 선택(땡이면 자동) → 결과 확인</div>
 
   <button class="deal-btn" onclick="dealAndRender()">카드 분배</button>
+  <button class="custom-btn" onclick="toggleCustomForm()">커스텀 카드 설정</button>
   <button class="judge-btn" onclick="judgeAndRender()">결과 확인</button>
 
+  <div id="customForm"></div>
   <div id="duelSpotlight"></div>
   <div class="players" id="players"></div>
   <div id="result"></div>
@@ -91,6 +101,66 @@
       document.getElementById('result').textContent =
         `재대결! 플레이어 ${id1 + 1}, 플레이어 ${id2 + 1}만 새 카드를 받았어요 - 카드를 내고 "결과 확인"을 다시 눌러주세요`;
       renderPlayers(new Set([id1, id2]), new Set());
+    }
+
+    function toggleCustomForm() {
+      const box = document.getElementById('customForm');
+      if (box.style.display === 'block') {
+        box.style.display = 'none';
+        return;
+      }
+      renderCustomForm();
+      box.style.display = 'block';
+    }
+
+    function numberOptionsHtml(selected) {
+      let html = '';
+      for (let n = 1; n <= 10; n++) {
+        html += `<option value="${n}" ${n === selected ? 'selected' : ''}>${n}</option>`;
+      }
+      return html;
+    }
+
+    function renderCustomForm() {
+      const box = document.getElementById('customForm');
+      let html = `<h2>플레이어별 카드 직접 설정 (숫자 + 광 여부)</h2>`;
+      for (let i = 0; i < 5; i++) {
+        html += `
+          <div class="custom-row">
+            <div class="label">플레이어 ${i + 1}</div>
+            <select id="c${i}_0_num">${numberOptionsHtml(1)}</select>
+            <label class="gwang-check"><input type="checkbox" id="c${i}_0_gwang"> 광</label>
+            <span style="color:#a8c9b8">+</span>
+            <select id="c${i}_1_num">${numberOptionsHtml(2)}</select>
+            <label class="gwang-check"><input type="checkbox" id="c${i}_1_gwang"> 광</label>
+          </div>`;
+      }
+      html += `<div style="text-align:center"><button class="apply-btn" onclick="applyCustomHands()">이 조합으로 시작</button></div>`;
+      box.innerHTML = html;
+    }
+
+    function applyCustomHands() {
+      currentPlays = [];
+      for (let i = 0; i < 5; i++) {
+        const num0 = Number(document.getElementById(`c${i}_0_num`).value);
+        const gwang0 = document.getElementById(`c${i}_0_gwang`).checked;
+        const num1 = Number(document.getElementById(`c${i}_1_num`).value);
+        const gwang1 = document.getElementById(`c${i}_1_gwang`).checked;
+        const hand = [
+          { number: num0, isGwang: gwang0 },
+          { number: num1, isGwang: gwang1 },
+        ];
+        currentPlays.push({
+          id: i,
+          hand,
+          played: isForcedPlay(hand) ? [hand[0], hand[1]] : [],
+        });
+      }
+      replayPair = null;
+      document.getElementById('customForm').style.display = 'none';
+      document.getElementById('duelSpotlight').style.display = 'none';
+      document.getElementById('result').textContent = '커스텀 조합 적용됨';
+      renderPlayers();
     }
 
     function selectCard(playerIndex, cardIndex) {
