@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>커스텀 섯다</title>
+<style>
+  body { font-family: sans-serif; background: #1b3a2b; color: white; text-align: center; padding: 40px; }
+  h1 { margin-bottom: 30px; }
+  button { padding: 10px 20px; font-size: 16px; cursor: pointer; border: none; border-radius: 6px; background: #f2c94c; margin-bottom: 30px; }
+  .players { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
+  .player { background: #234a37; padding: 16px; border-radius: 10px; min-width: 120px; }
+  .player h3 { margin: 0 0 10px 0; font-size: 14px; color: #f2c94c; }
+  .card { display: inline-block; width: 40px; height: 56px; line-height: 56px; margin: 4px; border-radius: 6px; font-weight: bold; }
+  .card.normal { background: #fff; color: #222; }
+  .card.gwang { background: #f2c94c; color: #7a3e00; }
+</style>
+</head>
+<body>
+  <h1>커스텀 섯다 - 손패 확인</h1>
+  <button onclick="dealAndRender()">카드 분배</button>
+  <div class="players" id="players"></div>
+
+  <script src="logic.js"></script>
+  <script>
+    function renderPlayers(hands) {
+      const container = document.getElementById('players');
+      container.innerHTML = '';
+      hands.forEach((hand, i) => {
+        const div = document.createElement('div');
+        div.className = 'player';
+        div.innerHTML = `<h3>플레이어 ${i + 1}</h3>` +
+          hand.map(c => `<span class="card ${c.isGwang ? 'gwang' : 'normal'}">${c.number}${c.isGwang ? '광' : ''}</span>`).join('');
+        container.appendChild(div);
+      });
+    }
+
+    function dealAndRender() {
+      const deck = createDeck();
+      const hands = dealHands(deck, 5);
+      renderPlayers(hands);
+    }
+  </script>
+</body>
+</html>
