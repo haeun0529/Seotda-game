@@ -63,6 +63,48 @@
     let currentHands = [];
     let currentPlays = []; // { id, hand, played } - played는 선택 전엔 빈 배열
     let replayPair = null; // 완전 동률로 재대결 중인 두 플레이어 id [id1, id2]
+    let extraCardsUsed = []; // [{ playerId, card }] - 이번 라운드 타이브레이크로 뽑은 카드들
+
+    function getRemainingDeck() {
+      const deck = createDeck();
+      const removeMatch = (c) => {
+        const idx = deck.findIndex(d => d.number === c.number && d.isGwang === c.isGwang);
+        if (idx !== -1) deck.splice(idx, 1);
+      };
+      currentPlays.forEach(p => p.hand.forEach(removeMatch)); // 지금 각자 손에 든 카드는 제외
+      extraCardsUsed.forEach(e => removeMatch(e.card)); // 이미 타이브레이크로 뽑힌 카드도 제외
+      return deck;
+    }
+
+    function drawSingleCard() {
+      const remaining = shuffle(getRemainingDeck());
+      return remaining[0];
+    }
+
+    // 필드에 나온 광 카드 총 장수: 각자 낸 카드 + 타이브레이크로 뽑은 카드까지 전부 포함
+    function totalFieldGwangCount() {
+      let count = 0;
+      currentPlays.forEach(p => { count += p.played.filter(c => c.isGwang).length; });
+      count += extraCardsUsed.filter(e => e.card.isGwang).length;
+      return count;
+    }
+
+    // 광을 하나도 안 낸/안 뽑은 플레이어들 (낸 카드 + 자기가 뽑은 타이브레이크 카드 기준)
+    function playersWithZeroGwang() {
+      return currentPlays.filter(p => {
+        const ownPlayedGwang = p.played.some(c => c.isGwang);
+        const ownExtraGwang = extraCardsUsed.some(e => e.playerId === p.id && e.card.isGwang);
+        return !ownPlayedGwang && !ownExtraGwang;
+      });
+    }
+
+    // 필드 광 카드가 3장이면 결투/타이브레이크 진행 상황과 무관하게 즉시 광 없는 사람들 승리로 확정
+    function checkGwangOverride() {
+      if (totalFieldGwangCount() !== 3) return false;
+      const winners = playersWithZeroGwang();
+      finalizeRoundWinner(winners.map(p => p.id));
+      return true;
+    }
 
     function isForcedPlay(hand) {
       const sameNumber = hand[0].number === hand[1].number; // 개인 땡
@@ -81,6 +123,7 @@
         };
       });
       replayPair = null;
+      extraCardsUsed = [];
       setDealButtonsEnabled(true);
       document.getElementById('result').textContent = '';
       document.getElementById('duelSpotlight').style.display = 'none';
@@ -104,6 +147,7 @@
       currentPlays[id1].played = isForcedPlay(hand1) ? hand1.slice() : [];
       currentPlays[id2].hand = hand2;
       currentPlays[id2].played = isForcedPlay(hand2) ? hand2.slice() : [];
+      extraCardsUsed = []; // 손패가 완전히 바뀌었으니 타이브레이크 기록도 초기화
 
       setDealButtonsEnabled(false); // 재대결 중엔 전체 카드 분배/커스텀 설정 잠금
       document.getElementById('duelSpotlight').style.display = 'none';
@@ -167,6 +211,7 @@
         });
       }
       replayPair = null;
+      extraCardsUsed = [];
       setDealButtonsEnabled(true);
       document.getElementById('customForm').style.display = 'none';
       document.getElementById('duelSpotlight').style.display = 'none';
@@ -243,13 +288,11 @@
               </div>
             </div>
             ${d.replay ? `<div style="color:#e05d5d;margin-top:12px;font-weight:bold;">완전 동률! 카드를 1장씩 추가로 뽑아 비교합니다</div>
-              <button class="replay-btn" onclick="drawExtraCards(${d.p1.id},${d.p2.id})">카드 1장씩 추가로 뽑기</button>` : ''}
+              <button class="replay-btn" onclick="drawExtraCards(${d.p1.id},${d.p2.id})">카드 1장씩 추가로 뽑기</button>
+              <button class="custom-btn" onclick="toggleExtraCustomForm(${d.p1.id},${d.p2.id})">추가 카드 직접 설정</button>
+              <div id="extraCustomForm_${d.p1.id}_${d.p2.id}"></div>` : ''}
             `;
         }).join('<hr style="border-color:#5a3d1a;margin:16px 0">');
-    }
-
-    function drawSingleCard() {
-      return shuffle(createDeck())[0];
     }
 
     function finalizeRoundWinner(winnerIds) {
@@ -260,27 +303,76 @@
       setDealButtonsEnabled(true);
     }
 
-    function drawExtraCards(id1, id2) {
-      const c1 = drawSingleCard();
-      const c2 = drawSingleCard();
+    // 결투 완전동률 타이브레이크에서 뽑힌 두 장(c1,c2)을 처리 (랜덤/커스텀 공용)
+    function processExtraCards(id1, id2, c1, c2) {
+      extraCardsUsed.push({ playerId: id1, card: c1 });
+      extraCardsUsed.push({ playerId: id2, card: c2 });
       const box = document.getElementById('duelSpotlight');
 
-      const extraHtml = `<div class="duel-vs" style="margin-top:20px;">
+      box.innerHTML += `<div class="duel-vs" style="margin-top:20px;">
           <div class="duel-side"><div class="name">플레이어 ${id1 + 1} 추가 카드</div>${cardHtml(c1)}</div>
           <div class="duel-x">VS</div>
           <div class="duel-side"><div class="name">플레이어 ${id2 + 1} 추가 카드</div>${cardHtml(c2)}</div>
         </div>`;
 
+      // 이 추가 카드로 필드 광이 3장이 됐으면, 결투 결과와 무관하게 광 없는 사람들이 승리
+      if (totalFieldGwangCount() === 3) {
+        box.innerHTML += `<div style="margin-top:12px;color:#f2c94c;font-weight:bold;">필드에 광 카드 3장 완성! 결투 결과와 무관하게 광 안 낸 사람들이 승리합니다</div>`;
+        checkGwangOverride();
+        return;
+      }
+
       if (c1.number === c2.number) {
-        box.innerHTML += extraHtml +
+        box.innerHTML +=
           `<div style="margin-top:12px;color:#e05d5d;font-weight:bold;">추가 카드도 동률! 이 두 명만 카드를 새로 받아 재대결합니다</div>
            <button class="replay-btn" onclick="startReplay(${id1},${id2})">재대결 시작</button>`;
       } else {
         const winnerId = c1.number > c2.number ? id1 : id2;
-        box.innerHTML += extraHtml +
-          `<div style="margin-top:12px;color:#f2c94c;font-weight:bold;">숫자가 더 높은 플레이어 ${winnerId + 1} 승리</div>`;
+        box.innerHTML += `<div style="margin-top:12px;color:#f2c94c;font-weight:bold;">숫자가 더 높은 플레이어 ${winnerId + 1} 승리</div>`;
         finalizeRoundWinner([winnerId]);
       }
+    }
+
+    function drawExtraCards(id1, id2) {
+      const c1 = drawSingleCard();
+      const c2 = drawSingleCard();
+      processExtraCards(id1, id2, c1, c2);
+    }
+
+    function toggleExtraCustomForm(id1, id2) {
+      const box = document.getElementById(`extraCustomForm_${id1}_${id2}`);
+      if (!box) return;
+      if (box.innerHTML) {
+        box.innerHTML = '';
+        return;
+      }
+      box.innerHTML = `
+        <div class="custom-row" style="margin-top:16px;">
+          <div class="label">플레이어 ${id1 + 1}</div>
+          <select id="extra_${id1}_num">${numberOptionsHtml(1)}</select>
+          <label class="gwang-check"><input type="checkbox" id="extra_${id1}_gwang"> 광</label>
+        </div>
+        <div class="custom-row">
+          <div class="label">플레이어 ${id2 + 1}</div>
+          <select id="extra_${id2}_num">${numberOptionsHtml(1)}</select>
+          <label class="gwang-check"><input type="checkbox" id="extra_${id2}_gwang"> 광</label>
+        </div>
+        <div style="text-align:center">
+          <button class="apply-btn" onclick="applyCustomExtraCards(${id1},${id2})">이 카드로 적용</button>
+        </div>`;
+    }
+
+    function applyCustomExtraCards(id1, id2) {
+      const c1 = {
+        number: Number(document.getElementById(`extra_${id1}_num`).value),
+        isGwang: document.getElementById(`extra_${id1}_gwang`).checked,
+      };
+      const c2 = {
+        number: Number(document.getElementById(`extra_${id2}_num`).value),
+        isGwang: document.getElementById(`extra_${id2}_gwang`).checked,
+      };
+      document.getElementById(`extraCustomForm_${id1}_${id2}`).innerHTML = '';
+      processExtraCards(id1, id2, c1, c2);
     }
 
     function judgeAndRender() {
@@ -293,6 +385,9 @@
         document.getElementById('result').textContent = '아직 카드를 안 낸 플레이어가 있어요!';
         return;
       }
+
+      // 결투 유무와 상관없이, 필드에 광 카드가 이미 3장이면 그걸로 바로 확정
+      if (checkGwangOverride()) return;
 
       const duels = findDuels(targetPlays);
       const { winners, replayDuel } = getFinalWinner(targetPlays);
