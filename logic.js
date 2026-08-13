@@ -82,14 +82,30 @@ function findDuels(plays) {
       const remain2 = p2.hand.find(c => c !== p2.played[0]);
       const combo1 = evaluateCombo(p1.played[0].number, remain1.number);
       const combo2 = evaluateCombo(p2.played[0].number, remain2.number);
-      const winner = compareCombo(combo1, combo2) >= 0 ? p1 : p2;
-      return { p1, p2, remain1, remain2, combo1, combo2, winner };
+      let cmp = compareCombo(combo1, combo2);
+      let replay = false;
+
+      if (cmp === 0) {
+        // 끗수까지 같으면, 낸 카드+남은 카드를 합쳐 광이 몇 장인지로 재비교
+        const gwangCount1 = (p1.played[0].isGwang ? 1 : 0) + (remain1.isGwang ? 1 : 0);
+        const gwangCount2 = (p2.played[0].isGwang ? 1 : 0) + (remain2.isGwang ? 1 : 0);
+        if (gwangCount1 !== gwangCount2) {
+          cmp = gwangCount1 > gwangCount2 ? 1 : -1;
+        } else {
+          replay = true; // 완전 동률 - 이 둘만 재대결
+        }
+      }
+
+      const winner = replay ? null : (cmp >= 0 ? p1 : p2);
+      return { p1, p2, remain1, remain2, combo1, combo2, winner, replay };
     });
 }
 
 // ----- 최종 승자 판정 -----
 // plays: [{ id, hand: [c1,c2], played: [card] 또는 [card,card] }]
-// 우선순위: 1vs1 결투 > 광 (인원수별) > 값 비교 (개인 땡 포함)
+// 우선순위: 1vs1 결투 > 광 카드 장수 > 값 비교 (개인 땡 포함)
+// 반환값: { winners: Player[], replayDuel: {p1,p2} | null }
+//   replayDuel이 있으면 그 두 명만 재대결해야 하므로 winners는 빈 배열
 function getFinalWinner(plays) {
   const personalDdang = plays.filter(p => p.played.length === 2);
   const singlePlays = plays.filter(p => p.played.length === 1);
@@ -111,8 +127,15 @@ function getFinalWinner(plays) {
   const duels = findDuels(plays);
 
   if (duels.length > 0) {
-    // 결투 승자(들)만 라운드 승자. 나머지(개인 땡 포함) 전부 자동 아웃
-    return duels.map(d => d.winner);
+    const replayDuel = duels.find(d => d.replay);
+    if (replayDuel) {
+      // 완전 동률 - 이 결투는 재대결. 다른 결투가 있었다면 그쪽 승자는 그대로 인정
+      return {
+        winners: duels.filter(d => !d.replay).map(d => d.winner),
+        replayDuel: { p1: replayDuel.p1, p2: replayDuel.p2 },
+      };
+    }
+    return { winners: duels.map(d => d.winner), replayDuel: null };
   }
 
   // 2. 결투 없으면 "총 광 카드 장수" 기준으로 승부 방향 결정
@@ -125,22 +148,25 @@ function getFinalWinner(plays) {
 
   if (totalGwangCards === 1) {
     // 광 카드 1장 → 결과 뒤집힘: 광 안 낸 전체(개인 땡 포함) 중 값이 가장 낮은 사람 승리
-    return [nonGwangEntries.sort((a, b) => a.value - b.value)[0].player];
+    return { winners: [nonGwangEntries.sort((a, b) => a.value - b.value)[0].player], replayDuel: null };
   }
   if (totalGwangCards === 2) {
     if (gwangUnits.length === 1) {
       // 진짜 광땡(한 사람이 광 2장 다 냄, 다른 사람은 광 없음) → 그 사람이 그냥 승리
-      return [gwangUnits[0].player];
+      return { winners: [gwangUnits[0].player], replayDuel: null };
     }
     // 서로 다른 두 사람이 광을 1장씩 냄 → 1광 > 3광 > 8광 순으로 비교
     const order = { 1: 3, 3: 2, 8: 1 };
-    return [gwangUnits.sort((a, b) => order[b.gwangCards[0].number] - order[a.gwangCards[0].number])[0].player];
+    return {
+      winners: [gwangUnits.sort((a, b) => order[b.gwangCards[0].number] - order[a.gwangCards[0].number])[0].player],
+      replayDuel: null,
+    };
   }
   if (totalGwangCards === 3) {
     // 광 카드 3장 다 나옴 (분포 상관없이) → 광 안 낸 전원 공동 승리
-    return nonGwangEntries.map(e => e.player);
+    return { winners: nonGwangEntries.map(e => e.player), replayDuel: null };
   }
 
   // 3. 광도 없으면 값이 가장 높은 사람 승리 (개인 땡이면 값이 커서 자연스럽게 유리)
-  return [allEntries.sort((a, b) => b.value - a.value)[0].player];
+  return { winners: [allEntries.sort((a, b) => b.value - a.value)[0].player], replayDuel: null };
 }

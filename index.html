@@ -33,6 +33,8 @@
   .duel-side .combo { font-size: 12px; color: #a8c9b8; margin-top: 6px; }
   .duel-side.win .combo { color: #f2c94c; font-weight: bold; }
   .duel-x { font-size: 22px; color: #a8c9b8; }
+  .replay-box { background: #4a1f1f; border: 2px solid #e05d5d; }
+  .replay-btn { background: #e05d5d; color: white; margin-top: 16px; }
 </style>
 </head>
 <body>
@@ -50,6 +52,7 @@
   <script>
     let currentHands = [];
     let currentPlays = []; // { id, hand, played } - played는 선택 전엔 빈 배열
+    let replayPair = null; // 완전 동률로 재대결 중인 두 플레이어 id [id1, id2]
 
     function isForcedPlay(hand) {
       const sameNumber = hand[0].number === hand[1].number; // 개인 땡
@@ -67,16 +70,34 @@
           played: isForcedPlay(hand) ? [hand[0], hand[1]] : [], // 땡/광땡이면 자동으로 2장 다 냄
         };
       });
+      replayPair = null;
       document.getElementById('result').textContent = '';
       document.getElementById('duelSpotlight').style.display = 'none';
       renderPlayers();
+    }
+
+    function startReplay(id1, id2) {
+      replayPair = [id1, id2];
+      const deck = createDeck();
+      const shuffled = shuffle(deck);
+      const hand1 = [shuffled[0], shuffled[1]];
+      const hand2 = [shuffled[2], shuffled[3]];
+      currentPlays[id1].hand = hand1;
+      currentPlays[id1].played = isForcedPlay(hand1) ? hand1.slice() : [];
+      currentPlays[id2].hand = hand2;
+      currentPlays[id2].played = isForcedPlay(hand2) ? hand2.slice() : [];
+
+      document.getElementById('duelSpotlight').style.display = 'none';
+      document.getElementById('result').textContent =
+        `재대결! 플레이어 ${id1 + 1}, 플레이어 ${id2 + 1}만 새 카드를 받았어요 - 카드를 내고 "결과 확인"을 다시 눌러주세요`;
+      renderPlayers(new Set([id1, id2]), new Set());
     }
 
     function selectCard(playerIndex, cardIndex) {
       const play = currentPlays[playerIndex];
       if (isForcedPlay(play.hand)) return; // 땡/광땡이면 선택 불가(이미 자동)
       play.played = [play.hand[cardIndex]];
-      renderPlayers();
+      renderPlayers(replayPair ? new Set(replayPair) : new Set());
     }
 
     function cardHtml(c) {
@@ -117,41 +138,62 @@
         return;
       }
       box.style.display = 'block';
+      box.classList.toggle('replay-box', duels.some(d => d.replay));
       box.innerHTML = `<h2>⚔ 1vs1 결투 발생 (${duels.length}곳)</h2>` +
         duels.map(d => {
           const p1IsWinner = d.winner === d.p1;
+          const tag1 = d.replay ? '' : (p1IsWinner ? ' ▶ 승' : '');
+          const tag2 = d.replay ? '' : (!p1IsWinner ? ' ▶ 승' : '');
           return `
             <div class="duel-vs">
-              <div class="duel-side ${p1IsWinner ? 'win' : ''}">
+              <div class="duel-side ${!d.replay && p1IsWinner ? 'win' : ''}">
                 <div class="name">플레이어 ${d.p1.id + 1}</div>
                 ${cardHtml(d.p1.played[0])}${cardHtml(d.remain1)}
-                <div class="combo">${d.combo1.name}${p1IsWinner ? ' ▶ 승' : ''}</div>
+                <div class="combo">${d.combo1.name}${tag1}</div>
               </div>
               <div class="duel-x">VS</div>
-              <div class="duel-side ${!p1IsWinner ? 'win' : ''}">
+              <div class="duel-side ${!d.replay && !p1IsWinner ? 'win' : ''}">
                 <div class="name">플레이어 ${d.p2.id + 1}</div>
                 ${cardHtml(d.p2.played[0])}${cardHtml(d.remain2)}
-                <div class="combo">${d.combo2.name}${!p1IsWinner ? ' ▶ 승' : ''}</div>
+                <div class="combo">${d.combo2.name}${tag2}</div>
               </div>
-            </div>`;
+            </div>
+            ${d.replay ? `<div style="color:#e05d5d;margin-top:12px;font-weight:bold;">완전 동률! 이 두 명만 재대결합니다</div>
+              <button class="replay-btn" onclick="startReplay(${d.p1.id},${d.p2.id})">재대결 시작</button>` : ''}
+            `;
         }).join('<hr style="border-color:#5a3d1a;margin:16px 0">');
     }
 
     function judgeAndRender() {
-      if (currentPlays.some(p => p.played.length === 0)) {
+      // 재대결 모드면 재대결 중인 두 명만 판정 (다른 3명은 이미 아웃된 상태 유지)
+      const targetPlays = replayPair
+        ? replayPair.map(id => currentPlays[id])
+        : currentPlays;
+
+      if (targetPlays.some(p => p.played.length === 0)) {
         document.getElementById('result').textContent = '아직 카드를 안 낸 플레이어가 있어요!';
         return;
       }
-      const duels = findDuels(currentPlays);
-      const winners = getFinalWinner(currentPlays);
+
+      const duels = findDuels(targetPlays);
+      const { winners, replayDuel } = getFinalWinner(targetPlays);
+
+      if (replayDuel) {
+        // 이번에도 완전 동률 - 다시 재대결
+        renderDuelSpotlight(duels);
+        renderPlayers(new Set([replayDuel.p1.id, replayDuel.p2.id]), new Set());
+        return;
+      }
+
       const winnerIds = new Set(winners.map(w => w.id));
-      const duelPlayerIds = new Set(duels.flatMap(d => [d.p1.id, d.p2.id]));
+      const duelPlayerIds = replayPair ? new Set(replayPair) : new Set(duels.flatMap(d => [d.p1.id, d.p2.id]));
 
       renderDuelSpotlight(duels);
       renderPlayers(duelPlayerIds, winnerIds);
 
       const names = winners.map(w => `플레이어 ${w.id + 1}`).join(', ');
       document.getElementById('result').textContent = `승자: ${names}`;
+      replayPair = null;
     }
   </script>
 </body>
