@@ -15,6 +15,7 @@
   .players { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin-bottom: 30px; }
   .player { background: #234a37; padding: 16px; border-radius: 10px; min-width: 140px; }
   .player.winner { outline: 3px solid #f2c94c; }
+  .player.duel-loser { opacity: 0.35; }
   .player h3 { margin: 0 0 10px 0; font-size: 14px; color: #f2c94c; }
   .card { display: inline-block; width: 40px; height: 56px; line-height: 56px; margin: 4px; border-radius: 6px; font-weight: bold; }
   .card.normal { background: #fff; color: #222; }
@@ -22,6 +23,16 @@
   .card.played { outline: 3px solid #4c8bf2; }
   .status { font-size: 12px; color: #a8c9b8; margin-top: 6px; }
   #result { font-size: 18px; margin-top: 20px; color: #f2c94c; font-weight: bold; }
+
+  #duelSpotlight { display: none; background: #3a2412; border: 2px solid #f2c94c; border-radius: 14px; padding: 24px; margin: 0 auto 30px; max-width: 600px; }
+  #duelSpotlight h2 { margin: 0 0 16px; color: #f2c94c; font-size: 16px; letter-spacing: 1px; }
+  .duel-vs { display: flex; align-items: center; justify-content: center; gap: 24px; }
+  .duel-side { text-align: center; }
+  .duel-side .name { font-size: 13px; color: #f2c94c; margin-bottom: 6px; }
+  .duel-side .card { width: 52px; height: 72px; line-height: 72px; font-size: 18px; }
+  .duel-side .combo { font-size: 12px; color: #a8c9b8; margin-top: 6px; }
+  .duel-side.win .combo { color: #f2c94c; font-weight: bold; }
+  .duel-x { font-size: 22px; color: #a8c9b8; }
 </style>
 </head>
 <body>
@@ -31,6 +42,7 @@
   <button class="deal-btn" onclick="dealAndRender()">카드 분배</button>
   <button class="judge-btn" onclick="judgeAndRender()">결과 확인</button>
 
+  <div id="duelSpotlight"></div>
   <div class="players" id="players"></div>
   <div id="result"></div>
 
@@ -39,45 +51,56 @@
     let currentHands = [];
     let currentPlays = []; // { id, hand, played } - played는 선택 전엔 빈 배열
 
+    function isForcedPlay(hand) {
+      const sameNumber = hand[0].number === hand[1].number; // 개인 땡
+      const bothGwang = hand[0].isGwang && hand[1].isGwang;  // 광땡
+      return sameNumber || bothGwang;
+    }
+
     function dealAndRender() {
       const deck = createDeck();
       currentHands = dealHands(deck, 5);
       currentPlays = currentHands.map((hand, i) => {
-        const isDdang = hand[0].number === hand[1].number;
         return {
           id: i,
           hand,
-          played: isDdang ? [hand[0], hand[1]] : [], // 땡이면 자동으로 2장 다 냄
+          played: isForcedPlay(hand) ? [hand[0], hand[1]] : [], // 땡/광땡이면 자동으로 2장 다 냄
         };
       });
       document.getElementById('result').textContent = '';
+      document.getElementById('duelSpotlight').style.display = 'none';
       renderPlayers();
     }
 
     function selectCard(playerIndex, cardIndex) {
       const play = currentPlays[playerIndex];
-      const hand = play.hand;
-      if (hand[0].number === hand[1].number) return; // 땡이면 선택 불가(이미 자동)
-      play.played = [hand[cardIndex]];
+      if (isForcedPlay(play.hand)) return; // 땡/광땡이면 선택 불가(이미 자동)
+      play.played = [play.hand[cardIndex]];
       renderPlayers();
     }
 
-    function renderPlayers() {
+    function cardHtml(c) {
+      return `<span class="card ${c.isGwang ? 'gwang' : 'normal'}">${c.number}${c.isGwang ? '광' : ''}</span>`;
+    }
+
+    function renderPlayers(duelPlayerIds = new Set(), winnerIds = new Set()) {
       const container = document.getElementById('players');
       container.innerHTML = '';
       currentPlays.forEach((play, i) => {
         const div = document.createElement('div');
         div.className = 'player';
-        const isDdang = play.hand[0].number === play.hand[1].number;
+        if (winnerIds.has(i)) div.classList.add('winner');
+        if (duelPlayerIds.size > 0 && !winnerIds.has(i)) div.classList.add('duel-loser');
+        const isDdang = isForcedPlay(play.hand);
 
-        const cardsHtml = play.hand.map((c, ci) => {
+        const cardsHtml = play.hand.map(c => {
           const isPlayed = play.played.includes(c);
           const cls = `card ${c.isGwang ? 'gwang' : 'normal'} ${isPlayed ? 'played' : ''}`;
           return `<span class="${cls}">${c.number}${c.isGwang ? '광' : ''}</span>`;
         }).join('');
 
         const buttonsHtml = isDdang
-          ? `<div class="status">개인 땡 - 자동으로 2장 다 냄</div>`
+          ? `<div class="status">${play.hand[0].isGwang && play.hand[1].isGwang ? '광땡' : '땡'} - 자동으로 2장 다 냄</div>`
           : play.hand.map((c, ci) =>
               `<button class="play-btn" onclick="selectCard(${i},${ci})" ${play.played[0] === c ? 'disabled' : ''}>${c.number}${c.isGwang ? '광' : ''} 내기</button>`
             ).join('');
@@ -87,19 +110,47 @@
       });
     }
 
+    function renderDuelSpotlight(duels) {
+      const box = document.getElementById('duelSpotlight');
+      if (duels.length === 0) {
+        box.style.display = 'none';
+        return;
+      }
+      box.style.display = 'block';
+      box.innerHTML = `<h2>⚔ 1vs1 결투 발생 (${duels.length}곳)</h2>` +
+        duels.map(d => {
+          const p1IsWinner = d.winner === d.p1;
+          return `
+            <div class="duel-vs">
+              <div class="duel-side ${p1IsWinner ? 'win' : ''}">
+                <div class="name">플레이어 ${d.p1.id + 1}</div>
+                ${cardHtml(d.p1.played[0])}${cardHtml(d.remain1)}
+                <div class="combo">${d.combo1.name}${p1IsWinner ? ' ▶ 승' : ''}</div>
+              </div>
+              <div class="duel-x">VS</div>
+              <div class="duel-side ${!p1IsWinner ? 'win' : ''}">
+                <div class="name">플레이어 ${d.p2.id + 1}</div>
+                ${cardHtml(d.p2.played[0])}${cardHtml(d.remain2)}
+                <div class="combo">${d.combo2.name}${!p1IsWinner ? ' ▶ 승' : ''}</div>
+              </div>
+            </div>`;
+        }).join('<hr style="border-color:#5a3d1a;margin:16px 0">');
+    }
+
     function judgeAndRender() {
       if (currentPlays.some(p => p.played.length === 0)) {
         document.getElementById('result').textContent = '아직 카드를 안 낸 플레이어가 있어요!';
         return;
       }
+      const duels = findDuels(currentPlays);
       const winners = getFinalWinner(currentPlays);
-      const winnerIds = winners.map(w => w.id);
+      const winnerIds = new Set(winners.map(w => w.id));
+      const duelPlayerIds = new Set(duels.flatMap(d => [d.p1.id, d.p2.id]));
 
-      document.querySelectorAll('.player').forEach((el, i) => {
-        el.classList.toggle('winner', winnerIds.includes(i));
-      });
+      renderDuelSpotlight(duels);
+      renderPlayers(duelPlayerIds, winnerIds);
 
-      const names = winnerIds.map(id => `플레이어 ${id + 1}`).join(', ');
+      const names = winners.map(w => `플레이어 ${w.id + 1}`).join(', ');
       document.getElementById('result').textContent = `승자: ${names}`;
     }
   </script>
