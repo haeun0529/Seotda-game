@@ -1,6 +1,10 @@
-// ===== 카드 & 덱 =====
+// ===================================
+// 커스텀 섯다 - 게임 로직 (logic.js)
+// ===================================
+
+// ----- 카드 & 덱 -----
 // 카드 = { number: 1~10, isGwang: true/false }
-// 1,3,8은 두 장 중 한 장이 광
+// 1, 3, 8은 두 장 중 한 장이 광
 function createDeck() {
   const deck = [];
   const gwangNumbers = [1, 3, 8];
@@ -29,8 +33,8 @@ function dealHands(deck, playerCount = 5) {
   return hands; // [[card,card], [card,card], ...]
 }
 
-// ===== 낼 카드 결정 =====
-// 손패가 같은 숫자(개인 땡)면 무조건 2장 다 냄. 아니면 選択(외부에서 결정된 카드 하나)
+// ----- 낼 카드 결정 -----
+// 손패가 같은 숫자(개인 땡)면 무조건 2장 다 냄. 아니면 선택된 카드 하나만 냄
 function resolvePlayed(hand, chosenCard) {
   if (hand[0].number === hand[1].number) {
     return [hand[0], hand[1]]; // 개인 땡, 강제로 둘 다
@@ -38,75 +42,89 @@ function resolvePlayed(hand, chosenCard) {
   return [chosenCard]; // 일반적으로는 1장 선택
 }
 
-// ===== 개인 땡 점수 =====
-function personalDdangScore(number) {
-  return number * 10; // 1땡=10, ..., 10땡(장땡)=100
+// ----- 조합 판정 (1vs1 결투에서 남은 카드 비교용) -----
+// 두 숫자를 조합해서 족보 순위를 매김 (rank 숫자가 작을수록 강함)
+function evaluateCombo(numA, numB) {
+  const [m1, m2] = [numA, numB].sort((a, b) => a - b);
+
+  if (m1 === 1 && m2 === 2) return { rank: 1, name: '알리' };
+  if (m1 === 1 && m2 === 4) return { rank: 2, name: '독사' };
+  if (m1 === 1 && m2 === 9) return { rank: 3, name: '구삥' };
+  if (m1 === 1 && m2 === 10) return { rank: 4, name: '장삥' };
+  if (m1 === 4 && m2 === 6) return { rank: 5, name: '세육' };
+
+  const sum = (m1 + m2) % 10;
+  if (sum === 9) return { rank: 6, name: '갑오', tiebreak: sum };
+  if (sum === 0) return { rank: 8, name: '망통', tiebreak: sum };
+  return { rank: 7, name: `${sum}끗`, tiebreak: sum };
 }
 
-// ===== 라운드 판정 =====
+function compareCombo(comboA, comboB) {
+  if (comboA.rank !== comboB.rank) return comboA.rank < comboB.rank ? 1 : -1; // rank 작을수록 승
+  const ta = comboA.tiebreak ?? 0;
+  const tb = comboB.tiebreak ?? 0;
+  return ta === tb ? 0 : (ta > tb ? 1 : -1);
+}
+
+// ----- 최종 승자 판정 -----
 // plays: [{ id, hand: [c1,c2], played: [card] 또는 [card,card] }]
-function judgeRound(plays) {
-  // 1. 개인 땡 낸 사람 분리 (2장 낸 사람)
+// 우선순위: 1vs1 결투 > 광 (인원수별) > 값 비교 (개인 땡 포함)
+function getFinalWinner(plays) {
   const personalDdang = plays.filter(p => p.played.length === 2);
   const singlePlays = plays.filter(p => p.played.length === 1);
 
-  // 2. 싱글 플레이어들 중 같은 숫자가 겹치는 사람들 찾기 (1vs1 땡, 광보다 우선)
+  // 모든 참가자를 { player, value, isGwang } 형태로 통일
+  // 개인 땡 → 숫자 * 10 (1땡=10 ~ 10땡(장땡)=100), 일반 카드 → 그냥 숫자
+  const allEntries = [
+    ...personalDdang.map(p => ({ player: p, value: p.played[0].number * 10, isGwang: false })),
+    ...singlePlays.map(p => ({ player: p, value: p.played[0].number, isGwang: p.played[0].isGwang })),
+  ];
+
+  // 1. 결투(같은 숫자 낸 두 명) 찾기 — 최우선
+  //    개인 땡은 숫자당 2장뿐이라 다른 사람과 겹칠 수 없음 → 결투 대상 아님
   const numberGroups = {};
   singlePlays.forEach(p => {
     const n = p.played[0].number;
-    if (!numberGroups[n]) numberGroups[n] = [];
-    numberGroups[n].push(p);
+    (numberGroups[n] ??= []).push(p);
   });
-
   const duels = Object.values(numberGroups).filter(g => g.length === 2);
-  const duelPlayerIds = new Set(duels.flat().map(p => p.id));
 
-  // 각 결투는 "남은 카드"(hand 중 안 낸 카드)의 끗수로 승부
-  const duelResults = duels.map(([p1, p2]) => {
-    const remain1 = p1.hand.find(c => c !== p1.played[0]);
-    const remain2 = p2.hand.find(c => c !== p2.played[0]);
-    const v1 = getKkeutValue(remain1, remain2);
-    const v2 = getKkeutValue(remain2, remain1);
-    return v1 >= v2 ? p1 : p2; // 동률 처리는 추후 보완 필요
-  });
-
-  // 3. 결투에 안 낀 나머지 싱글 플레이어들 (광 체크 대상)
-  const rest = singlePlays.filter(p => !duelPlayerIds.has(p.id));
-  const gwangPlayers = rest.filter(p => p.played[0].isGwang);
-  const nonGwangPlayers = rest.filter(p => !p.played[0].isGwang);
-
-  let restWinner = null;
-
-  if (gwangPlayers.length === 1) {
-    // 광 1명 → 결과 뒤집힘: 나머지 중 최저 숫자가 승리
-    restWinner = [...nonGwangPlayers].sort((a, b) => a.played[0].number - b.played[0].number)[0];
-  } else if (gwangPlayers.length === 2) {
-    // 광 2명 → 1광>3광>8광 순으로 1vs1 (광땡 예외는 별도 체크 필요)
-    const order = { 1: 3, 3: 2, 8: 1 };
-    restWinner = gwangPlayers.sort((a, b) => order[b.played[0].number] - order[a.played[0].number])[0];
-  } else if (gwangPlayers.length === 3) {
-    // 광 3명 → 광 안 낸 나머지 2명이 승부 (일반 숫자 비교)
-    restWinner = [...nonGwangPlayers].sort((a, b) => b.played[0].number - a.played[0].number)[0];
-  } else {
-    // 광 없음 → 그냥 숫자 제일 높은 사람
-    restWinner = [...rest].sort((a, b) => b.played[0].number - a.played[0].number)[0];
+  if (duels.length > 0) {
+    // 결투 승자(들)만 라운드 승자. 나머지(개인 땡 포함) 전부 자동 아웃
+    return duels.map(([p1, p2]) => {
+      const remain1 = p1.hand.find(c => c !== p1.played[0]);
+      const remain2 = p2.hand.find(c => c !== p2.played[0]);
+      const combo1 = evaluateCombo(p1.played[0].number, remain1.number);
+      const combo2 = evaluateCombo(p2.played[0].number, remain2.number);
+      return compareCombo(combo1, combo2) >= 0 ? p1 : p2;
+    });
   }
 
-  // 4. 개인 땡 점수 반영 (다른 결과들과 어떻게 최종 비교되는지는 별도 규칙 필요)
-  const ddangScores = personalDdang.map(p => ({
-    player: p,
-    score: personalDdangScore(p.played[0].number),
-  }));
+  // 2. 결투 없으면 광 개수로 승부 방향 결정
+  const gwangEntries = allEntries.filter(e => e.isGwang);
+  const nonGwangEntries = allEntries.filter(e => !e.isGwang);
 
-  return {
-    duelResults,   // 1vs1 땡 승자들
-    restWinner,    // 광/일반 로직 승자
-    ddangScores,   // 개인 땡 점수들
-  };
+  if (gwangEntries.length === 1) {
+    // 광 1명 → 결과 뒤집힘: 나머지 전체(개인 땡 포함) 중 값이 가장 낮은 사람 승리
+    return [nonGwangEntries.sort((a, b) => a.value - b.value)[0].player];
+  }
+  if (gwangEntries.length === 2) {
+    // 광 2명 → 1광 > 3광 > 8광 순으로 1vs1
+    const order = { 1: 3, 3: 2, 8: 1 };
+    return [gwangEntries.sort((a, b) => order[b.value] - order[a.value])[0].player];
+  }
+  if (gwangEntries.length === 3) {
+    // 광 3명 → 광 안 낸 나머지(비-광) 중 값이 가장 높은 사람 승리
+    return [nonGwangEntries.sort((a, b) => b.value - a.value)[0].player];
+  }
+
+  // 3. 광도 없으면 값이 가장 높은 사람 승리 (개인 땡이면 값이 커서 자연스럽게 유리)
+  return [allEntries.sort((a, b) => b.value - a.value)[0].player];
 }
 
-// 남은 카드의 끗수/특수조합(알리,독사 등) 계산 - 미완성, 별도 정의 필요
-function getKkeutValue(myRemain, opponentRemain) {
-  // TODO: 알리/독사/구삥/장삥/세육 판정 추가
-  return myRemain.number;
-}
+// ----- 테스트 -----
+const deck = createDeck();
+console.log('총 카드 수:', deck.length);
+
+const hands = dealHands(deck, 5);
+console.log('플레이어별 손패:', hands);
