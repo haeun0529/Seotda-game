@@ -147,8 +147,9 @@ function getFinalWinner(plays) {
   const nonGwangEntries = allEntries.filter(e => !gwangUnits.some(u => u.player === e.player));
 
   if (totalGwangCards === 1) {
-    // 광 카드 1장 → 결과 뒤집힘: 광 안 낸 전체(개인 땡 포함) 중 값이 가장 낮은 사람 승리
-    return { winners: [nonGwangEntries.sort((a, b) => a.value - b.value)[0].player], replayDuel: null };
+    // 광 카드 1장 → 결과 뒤집힘: 광 낸 사람 포함 전체(개인 땡도 포함) 중 값이 가장 낮은 사람 승리
+    // (광 낸 사람도 자기 카드 숫자값 그대로 비교에 참여함. 예: 1광=1이라 대부분 최저값으로 승리)
+    return { winners: [allEntries.sort((a, b) => a.value - b.value)[0].player], replayDuel: null };
   }
   if (totalGwangCards === 2) {
     if (gwangUnits.length === 1) {
