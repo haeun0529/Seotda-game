@@ -44,6 +44,7 @@ function resolvePlayed(hand, chosenCard) {
 
 // ----- 조합 판정 (1vs1 결투에서 남은 카드 비교용) -----
 // 두 숫자를 조합해서 족보 순위를 매김 (rank 숫자가 작을수록 강함)
+// 강한 순서: 알리 > 독사 > 구삥 > 장삥 > 장사 > 세육 > 갑오 > 끗 > 망통
 function evaluateCombo(numA, numB) {
   const [m1, m2] = [numA, numB].sort((a, b) => a - b);
 
@@ -51,12 +52,13 @@ function evaluateCombo(numA, numB) {
   if (m1 === 1 && m2 === 4) return { rank: 2, name: '독사' };
   if (m1 === 1 && m2 === 9) return { rank: 3, name: '구삥' };
   if (m1 === 1 && m2 === 10) return { rank: 4, name: '장삥' };
-  if (m1 === 4 && m2 === 6) return { rank: 5, name: '세육' };
+  if (m1 === 4 && m2 === 10) return { rank: 5, name: '장사' };
+  if (m1 === 4 && m2 === 6) return { rank: 6, name: '세육' };
 
   const sum = (m1 + m2) % 10;
-  if (sum === 9) return { rank: 6, name: '갑오', tiebreak: sum };
-  if (sum === 0) return { rank: 8, name: '망통', tiebreak: sum };
-  return { rank: 7, name: `${sum}끗`, tiebreak: sum };
+  if (sum === 9) return { rank: 7, name: '갑오', tiebreak: sum };
+  if (sum === 0) return { rank: 9, name: '망통', tiebreak: sum };
+  return { rank: 8, name: `${sum}끗`, tiebreak: sum };
 }
 
 function compareCombo(comboA, comboB) {
