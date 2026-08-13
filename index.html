@@ -94,22 +94,39 @@
       return count;
     }
 
-    // 광을 하나도 안 낸/안 뽑은/안 가진 플레이어들 (낸 카드 + 결투 남은 카드 + 타이브레이크 카드 기준)
-    function playersWithZeroGwang() {
+    // 각 플레이어가 지금까지(낸 카드+결투 남은 카드+타이브레이크 카드) 가진 광 카드 수
+    function gwangHoldersCount() {
       const duels = findDuels(currentPlays);
-      return currentPlays.filter(p => {
-        const ownPlayedGwang = p.played.some(c => c.isGwang);
-        const ownExtraGwang = extraCardsUsed.some(e => e.playerId === p.id && e.card.isGwang);
+      return currentPlays.map(p => {
+        let count = p.played.filter(c => c.isGwang).length;
         const duel = duels.find(d => d.p1.id === p.id || d.p2.id === p.id);
-        const ownRemainGwang = duel ? (duel.p1.id === p.id ? duel.remain1.isGwang : duel.remain2.isGwang) : false;
-        return !ownPlayedGwang && !ownExtraGwang && !ownRemainGwang;
-      });
+        if (duel) {
+          const remain = duel.p1.id === p.id ? duel.remain1 : duel.remain2;
+          if (remain.isGwang) count++;
+        }
+        count += extraCardsUsed.filter(e => e.playerId === p.id && e.card.isGwang).length;
+        return { player: p, count };
+      }).filter(h => h.count > 0);
     }
 
-    // 필드 광 카드가 3장이면 결투/타이브레이크 진행 상황과 무관하게 즉시 광 없는 사람들 승리로 확정
+    // 광을 하나도 안 낸/안 뽑은/안 가진 플레이어들 (낸 카드 + 결투 남은 카드 + 타이브레이크 카드 기준)
+    function playersWithZeroGwang() {
+      const holderIds = new Set(gwangHoldersCount().map(h => h.player.id));
+      return currentPlays.filter(p => !holderIds.has(p.id));
+    }
+
+    // 필드 광 카드가 3장이면 결투/타이브레이크 진행 상황과 무관하게 즉시 승자 확정
     function checkGwangOverride() {
       if (totalFieldGwangCount() !== 3) return false;
-      const winners = playersWithZeroGwang();
+      const holders = gwangHoldersCount();
+      let winners;
+      // 예외: 광땡(2장)+낱장 광(1장) 분포면 낱장 광 낸 사람이 승리
+      if (holders.length === 2) {
+        const ddang = holders.find(h => h.count === 2);
+        const lone = holders.find(h => h.count === 1);
+        if (ddang && lone) winners = [lone.player];
+      }
+      if (!winners) winners = playersWithZeroGwang(); // 그 외 분포는 광 없는 전원 공동 승리
       finalizeRoundWinner(winners.map(p => p.id));
       return true;
     }

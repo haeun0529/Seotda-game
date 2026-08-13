@@ -166,7 +166,15 @@ function getFinalWinner(plays) {
     };
   }
   if (totalGwangCards === 3) {
-    // 광 카드 3장 다 나옴 (분포 상관없이) → 광 안 낸 전원 공동 승리
+    // 분포가 "광땡(2장) + 낱장 광(1장)"이면 예외: 낱장 광 낸 사람이 승리 (광땡은 패배)
+    if (gwangUnits.length === 2) {
+      const ddangGwangUnit = gwangUnits.find(u => u.gwangCards.length === 2);
+      const loneGwangUnit = gwangUnits.find(u => u.gwangCards.length === 1);
+      if (ddangGwangUnit && loneGwangUnit) {
+        return { winners: [loneGwangUnit.player], replayDuel: null };
+      }
+    }
+    // 그 외 분포(예: 3명이 각자 1장씩)는 광 안 낸 전원 공동 승리
     return { winners: nonGwangEntries.map(e => e.player), replayDuel: null };
   }
 
