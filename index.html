@@ -5,39 +5,102 @@
 <title>커스텀 섯다</title>
 <style>
   body { font-family: sans-serif; background: #1b3a2b; color: white; text-align: center; padding: 40px; }
-  h1 { margin-bottom: 30px; }
-  button { padding: 10px 20px; font-size: 16px; cursor: pointer; border: none; border-radius: 6px; background: #f2c94c; margin-bottom: 30px; }
-  .players { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
-  .player { background: #234a37; padding: 16px; border-radius: 10px; min-width: 120px; }
+  h1 { margin-bottom: 10px; }
+  .sub { color: #a8c9b8; margin-bottom: 30px; font-size: 14px; }
+  button { padding: 10px 20px; font-size: 15px; cursor: pointer; border: none; border-radius: 6px; margin: 4px; }
+  .deal-btn { background: #f2c94c; }
+  .play-btn { background: #4c8bf2; color: white; font-size: 13px; padding: 6px 12px; }
+  .play-btn:disabled { background: #555; cursor: not-allowed; }
+  .judge-btn { background: #e05d5d; color: white; }
+  .players { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin-bottom: 30px; }
+  .player { background: #234a37; padding: 16px; border-radius: 10px; min-width: 140px; }
+  .player.winner { outline: 3px solid #f2c94c; }
   .player h3 { margin: 0 0 10px 0; font-size: 14px; color: #f2c94c; }
   .card { display: inline-block; width: 40px; height: 56px; line-height: 56px; margin: 4px; border-radius: 6px; font-weight: bold; }
   .card.normal { background: #fff; color: #222; }
   .card.gwang { background: #f2c94c; color: #7a3e00; }
+  .card.played { outline: 3px solid #4c8bf2; }
+  .status { font-size: 12px; color: #a8c9b8; margin-top: 6px; }
+  #result { font-size: 18px; margin-top: 20px; color: #f2c94c; font-weight: bold; }
 </style>
 </head>
 <body>
-  <h1>커스텀 섯다 - 손패 확인</h1>
-  <button onclick="dealAndRender()">카드 분배</button>
+  <h1>커스텀 섯다</h1>
+  <div class="sub">카드 분배 → 각자 카드 1장 선택(땡이면 자동) → 결과 확인</div>
+
+  <button class="deal-btn" onclick="dealAndRender()">카드 분배</button>
+  <button class="judge-btn" onclick="judgeAndRender()">결과 확인</button>
+
   <div class="players" id="players"></div>
+  <div id="result"></div>
 
   <script src="logic.js"></script>
   <script>
-    function renderPlayers(hands) {
+    let currentHands = [];
+    let currentPlays = []; // { id, hand, played } - played는 선택 전엔 빈 배열
+
+    function dealAndRender() {
+      const deck = createDeck();
+      currentHands = dealHands(deck, 5);
+      currentPlays = currentHands.map((hand, i) => {
+        const isDdang = hand[0].number === hand[1].number;
+        return {
+          id: i,
+          hand,
+          played: isDdang ? [hand[0], hand[1]] : [], // 땡이면 자동으로 2장 다 냄
+        };
+      });
+      document.getElementById('result').textContent = '';
+      renderPlayers();
+    }
+
+    function selectCard(playerIndex, cardIndex) {
+      const play = currentPlays[playerIndex];
+      const hand = play.hand;
+      if (hand[0].number === hand[1].number) return; // 땡이면 선택 불가(이미 자동)
+      play.played = [hand[cardIndex]];
+      renderPlayers();
+    }
+
+    function renderPlayers() {
       const container = document.getElementById('players');
       container.innerHTML = '';
-      hands.forEach((hand, i) => {
+      currentPlays.forEach((play, i) => {
         const div = document.createElement('div');
         div.className = 'player';
-        div.innerHTML = `<h3>플레이어 ${i + 1}</h3>` +
-          hand.map(c => `<span class="card ${c.isGwang ? 'gwang' : 'normal'}">${c.number}${c.isGwang ? '광' : ''}</span>`).join('');
+        const isDdang = play.hand[0].number === play.hand[1].number;
+
+        const cardsHtml = play.hand.map((c, ci) => {
+          const isPlayed = play.played.includes(c);
+          const cls = `card ${c.isGwang ? 'gwang' : 'normal'} ${isPlayed ? 'played' : ''}`;
+          return `<span class="${cls}">${c.number}${c.isGwang ? '광' : ''}</span>`;
+        }).join('');
+
+        const buttonsHtml = isDdang
+          ? `<div class="status">개인 땡 - 자동으로 2장 다 냄</div>`
+          : play.hand.map((c, ci) =>
+              `<button class="play-btn" onclick="selectCard(${i},${ci})" ${play.played[0] === c ? 'disabled' : ''}>${c.number}${c.isGwang ? '광' : ''} 내기</button>`
+            ).join('');
+
+        div.innerHTML = `<h3>플레이어 ${i + 1}</h3>${cardsHtml}<div>${buttonsHtml}</div>`;
         container.appendChild(div);
       });
     }
 
-    function dealAndRender() {
-      const deck = createDeck();
-      const hands = dealHands(deck, 5);
-      renderPlayers(hands);
+    function judgeAndRender() {
+      if (currentPlays.some(p => p.played.length === 0)) {
+        document.getElementById('result').textContent = '아직 카드를 안 낸 플레이어가 있어요!';
+        return;
+      }
+      const winners = getFinalWinner(currentPlays);
+      const winnerIds = winners.map(w => w.id);
+
+      document.querySelectorAll('.player').forEach((el, i) => {
+        el.classList.toggle('winner', winnerIds.includes(i));
+      });
+
+      const names = winnerIds.map(id => `플레이어 ${id + 1}`).join(', ');
+      document.getElementById('result').textContent = `승자: ${names}`;
     }
   </script>
 </body>
