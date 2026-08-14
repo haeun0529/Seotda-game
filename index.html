@@ -131,6 +131,12 @@
       }
     };
 
+    // 로비에서 정한 실제 닉네임이 있으면 그걸 쓰고, 없으면 "플레이어 N"으로 대체
+    function playerLabel(id) {
+      const name = window.playerNames && window.playerNames[id];
+      return name || `플레이어 ${id + 1}`;
+    }
+
     function getRemainingDeck() {
       const deck = createDeck();
       const removeMatch = (c) => {
@@ -253,7 +259,7 @@
       setDealButtonsEnabled(false); // 재대결 중엔 전체 카드 분배/커스텀 설정 잠금
       document.getElementById('duelSpotlight').style.display = 'none';
       document.getElementById('result').textContent =
-        `재대결! 플레이어 ${id1 + 1}, 플레이어 ${id2 + 1}만 새 카드를 받았어요 - 카드를 내고 "결과 확인"을 다시 눌러주세요`;
+        `재대결! ${playerLabel(id1)}, ${playerLabel(id2)}만 새 카드를 받았어요 - 카드를 내고 "결과 확인"을 다시 눌러주세요`;
       const dimIds = new Set(currentPlays.map(p => p.id).filter(id => id !== id1 && id !== id2));
       renderPlayers(dimIds, new Set());
       pushGameState();
@@ -283,7 +289,7 @@
       for (let i = 0; i < 5; i++) {
         html += `
           <div class="custom-row">
-            <div class="label">플레이어 ${i + 1}</div>
+            <div class="label">${playerLabel(i)}</div>
             <select id="c${i}_0_num">${numberOptionsHtml(1)}</select>
             <label class="gwang-check"><input type="checkbox" id="c${i}_0_gwang"> 광</label>
             <span style="color:#a8c9b8">+</span>
@@ -363,7 +369,7 @@
               `<button class="play-btn" onclick="selectCard(${i},${ci})" ${play.played[0] === c ? 'disabled' : ''}>${c.number}${c.isGwang ? '광' : ''} 내기</button>`
             ).join('');
 
-        div.innerHTML = `<h3>플레이어 ${i + 1}</h3>${cardsHtml}<div>${buttonsHtml}</div>`;
+        div.innerHTML = `<h3>${playerLabel(i)}</h3>${cardsHtml}<div>${buttonsHtml}</div>`;
         container.appendChild(div);
       });
     }
@@ -391,13 +397,13 @@
           return `
             <div class="duel-vs">
               <div class="duel-side ${!d.replay && p1IsWinner ? 'win' : ''}">
-                <div class="name">플레이어 ${d.p1.id + 1}</div>
+                <div class="name">${playerLabel(d.p1.id)}</div>
                 ${cardHtml(d.p1.played[0])}${cardHtml(d.remain1)}
                 <div class="combo">${d.combo1.name}${tag1}</div>
               </div>
               <div class="duel-x">VS</div>
               <div class="duel-side ${!d.replay && !p1IsWinner ? 'win' : ''}">
-                <div class="name">플레이어 ${d.p2.id + 1}</div>
+                <div class="name">${playerLabel(d.p2.id)}</div>
                 ${cardHtml(d.p2.played[0])}${cardHtml(d.remain2)}
                 <div class="combo">${d.combo2.name}${tag2}</div>
               </div>
@@ -421,7 +427,7 @@
       const winnerSet = new Set(winnerIds);
       const dimIds = new Set(currentPlays.map(p => p.id).filter(id => !winnerSet.has(id)));
       renderPlayers(dimIds, winnerSet);
-      document.getElementById('result').textContent = `승자: ${winnerIds.map(id => `플레이어 ${id + 1}`).join(', ')}`;
+      document.getElementById('result').textContent = `승자: ${winnerIds.map(id => playerLabel(id)).join(', ')}`;
       setDealButtonsEnabled(true);
       // 멀티플레이 중엔 방장만 다음 라운드 버튼을 봄 (로컬 테스트 중엔 항상 보임)
       const canShowNextRound = !window.isMultiplayerGame || window.isHost;
@@ -434,9 +440,9 @@
       const target = document.getElementById(targetElId);
       if (!target) return;
       let html = `<div class="duel-vs" style="margin-top:20px;">
-          <div class="duel-side"><div class="name">플레이어 ${id1 + 1} 추가 카드</div>${cardHtml(c1)}</div>
+          <div class="duel-side"><div class="name">${playerLabel(id1)} 추가 카드</div>${cardHtml(c1)}</div>
           <div class="duel-x">VS</div>
-          <div class="duel-side"><div class="name">플레이어 ${id2 + 1} 추가 카드</div>${cardHtml(c2)}</div>
+          <div class="duel-side"><div class="name">${playerLabel(id2)} 추가 카드</div>${cardHtml(c2)}</div>
         </div>`;
 
       // 이 추가 카드로 필드 광이 3장이 됐으면, 결투 결과와 무관하게 광 없는 사람들이 승리
@@ -452,7 +458,7 @@
            <button class="replay-btn" onclick="startReplay(${id1},${id2})">재대결 시작</button>`;
       } else {
         const winnerId = c1.number > c2.number ? id1 : id2;
-        target.innerHTML = html + `<div style="margin-top:12px;color:#f2c94c;font-weight:bold;">숫자가 더 높은 플레이어 ${winnerId + 1} 승리</div>`;
+        target.innerHTML = html + `<div style="margin-top:12px;color:#f2c94c;font-weight:bold;">숫자가 더 높은 ${playerLabel(winnerId)} 승리</div>`;
         finalizeRoundWinner([winnerId]);
       }
     }
@@ -480,12 +486,12 @@
       }
       box.innerHTML = `
         <div class="custom-row" style="margin-top:16px;">
-          <div class="label">플레이어 ${id1 + 1}</div>
+          <div class="label">${playerLabel(id1)}</div>
           <select id="extra_${id1}_num">${numberOptionsHtml(1)}</select>
           <label class="gwang-check"><input type="checkbox" id="extra_${id1}_gwang"> 광</label>
         </div>
         <div class="custom-row">
-          <div class="label">플레이어 ${id2 + 1}</div>
+          <div class="label">${playerLabel(id2)}</div>
           <select id="extra_${id2}_num">${numberOptionsHtml(1)}</select>
           <label class="gwang-check"><input type="checkbox" id="extra_${id2}_gwang"> 광</label>
         </div>
@@ -668,15 +674,18 @@
             window.isMultiplayerGame = true;
             window.isHost = isHost;
             window.myGameId = (data.idByPlayer || {})[playerId];
+            window.playerNames = data.playerNames || [];
             window.roomRef = roomRef;
 
             const dealBtn = document.getElementById('dealBtn');
             if (dealBtn) dealBtn.style.display = 'none'; // 멀티플레이 중엔 랜덤 재분배 버튼 숨김
             const sub = document.querySelector('#gameScreen .sub');
             if (sub && window.myGameId !== null && window.myGameId !== undefined) {
-              sub.textContent = `나는 플레이어 ${window.myGameId + 1}입니다 - 내 카드만 낼 수 있어요`;
+              const myName = window.playerNames[window.myGameId] || `플레이어 ${window.myGameId + 1}`;
+              sub.textContent = `나는 ${myName}입니다 - 내 카드만 낼 수 있어요`;
             }
           }
+          if (data.playerNames) window.playerNames = data.playerNames;
           if (data.game) window.loadGameState(data.game);
         }
       });
@@ -699,9 +708,13 @@
 
       // 참가 순서(joinedAt) 기준으로 플레이어 1~5 자리 배정
       const idByPlayer = {};
+      const playerNames = [];
       Object.entries(data.players || {})
         .sort((a, b) => a[1].joinedAt - b[1].joinedAt)
-        .forEach(([pid], idx) => { idByPlayer[pid] = idx; });
+        .forEach(([pid, info], idx) => {
+          idByPlayer[pid] = idx;
+          playerNames[idx] = info.name;
+        });
 
       const deck = window.createDeck();
       const hands = window.dealHands(deck, 5);
@@ -714,6 +727,7 @@
       await updateDoc(roomRef, {
         status: 'playing',
         idByPlayer,
+        playerNames,
         game: { plays, extraCardsUsed: [], replayPair: null },
       });
     };
