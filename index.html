@@ -225,6 +225,7 @@
 
     // 라운드가 끝난 뒤 "다음 라운드" 버튼으로 호출 - 새 카드로 다음 판 시작하고 라운드 번호 올림
     function startNextRound() {
+      if (window.isMultiplayerGame && !window.isHost) return; // 방장만 다음 라운드 진행 가능
       roundNumber += 1;
       document.getElementById('roundLabel').textContent = `라운드 ${roundNumber}`;
       dealAndRender();
@@ -422,7 +423,9 @@
       renderPlayers(dimIds, winnerSet);
       document.getElementById('result').textContent = `승자: ${winnerIds.map(id => `플레이어 ${id + 1}`).join(', ')}`;
       setDealButtonsEnabled(true);
-      document.getElementById('nextRoundBtn').style.display = 'inline-block';
+      // 멀티플레이 중엔 방장만 다음 라운드 버튼을 봄 (로컬 테스트 중엔 항상 보임)
+      const canShowNextRound = !window.isMultiplayerGame || window.isHost;
+      document.getElementById('nextRoundBtn').style.display = canShowNextRound ? 'inline-block' : 'none';
       pushGameState();
     }
 
@@ -515,6 +518,7 @@
       if (targetPlays.some(p => p.played.length === 0)) {
         // 아직 다 안 냈어도 손패/버튼은 항상 최신 상태로 보여줘야 함 (특히 원격에서 상태 로드된 경우)
         document.getElementById('duelSpotlight').style.display = 'none';
+        document.getElementById('nextRoundBtn').style.display = 'none';
         renderPlayers();
         if (fromButtonClick) document.getElementById('result').textContent = '아직 카드를 안 낸 플레이어가 있어요!';
         return;
@@ -662,6 +666,7 @@
             document.getElementById('gameScreen').style.display = 'block';
 
             window.isMultiplayerGame = true;
+            window.isHost = isHost;
             window.myGameId = (data.idByPlayer || {})[playerId];
             window.roomRef = roomRef;
 
