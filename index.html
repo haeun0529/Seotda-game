@@ -520,7 +520,7 @@
         document.getElementById('duelSpotlight').style.display = 'none';
         document.getElementById('nextRoundBtn').style.display = 'none';
         renderPlayers();
-        if (fromButtonClick) document.getElementById('result').textContent = '아직 카드를 안 낸 플레이어가 있어요!';
+        document.getElementById('result').textContent = fromButtonClick ? '아직 카드를 안 낸 플레이어가 있어요!' : '';
         return;
       }
 
