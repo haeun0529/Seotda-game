@@ -70,13 +70,13 @@
     <h1>커스텀 섯다</h1>
     <div class="lobby-box">
       <h2>방 만들기</h2>
-      <input type="text" id="createNameInput" placeholder="닉네임">
+      <input type="text" id="createNameInput" placeholder="닉네임" maxlength="10">
       <button onclick="handleCreateRoom()">방 만들기</button>
     </div>
     <div class="lobby-box join-box">
       <h2>코드로 입장하기</h2>
       <input type="text" id="joinCodeInput" placeholder="방 코드 (4자리)" maxlength="4">
-      <input type="text" id="joinNameInput" placeholder="닉네임">
+      <input type="text" id="joinNameInput" placeholder="닉네임" maxlength="10">
       <button onclick="handleJoinRoom()">입장하기</button>
     </div>
     <div id="lobbyError"></div>
@@ -586,7 +586,7 @@
     }
 
     window.handleCreateRoom = async function () {
-      const name = document.getElementById('createNameInput').value.trim();
+      const name = document.getElementById('createNameInput').value.trim().slice(0, 10);
       if (!name) return showLobbyError('닉네임을 입력해주세요');
 
       showLobbyError('방 만드는 중...');
@@ -612,7 +612,7 @@
 
     window.handleJoinRoom = async function () {
       const code = document.getElementById('joinCodeInput').value.trim();
-      const name = document.getElementById('joinNameInput').value.trim();
+      const name = document.getElementById('joinNameInput').value.trim().slice(0, 10);
       if (!code || code.length !== 4) return showLobbyError('4자리 방 코드를 입력해주세요');
       if (!name) return showLobbyError('닉네임을 입력해주세요');
 
