@@ -92,6 +92,7 @@
   <div id="gameScreen">
   <h1>커스텀 섯다</h1>
   <div class="sub">카드 분배 → 각자 카드 1장 선택(땡이면 자동) → 결과 확인</div>
+  <div id="roundLabel" style="color:#f2c94c;font-weight:bold;margin-bottom:10px;">라운드 1</div>
 
   <button class="deal-btn" id="dealBtn" onclick="dealAndRender()">카드 분배</button>
   <button class="custom-btn" id="customBtn" onclick="toggleCustomForm()">커스텀 카드 설정</button>
@@ -101,6 +102,7 @@
   <div id="duelSpotlight"></div>
   <div class="players" id="players"></div>
   <div id="result"></div>
+  <button class="deal-btn" id="nextRoundBtn" style="display:none;margin-top:16px;" onclick="startNextRound()">다음 라운드</button>
 
 
   <script src="logic.js"></script>
@@ -109,6 +111,7 @@
     let currentPlays = []; // { id, hand, played } - played는 선택 전엔 빈 배열
     let replayPair = null; // 완전 동률로 재대결 중인 두 플레이어 id [id1, id2]
     let extraCardsUsed = []; // [{ playerId, card }] - 이번 라운드 타이브레이크로 뽑은 카드들
+    let roundNumber = 1;
 
     // ---- 멀티플레이 동기화 (roomRef/myGameId/isMultiplayerGame은 로비 스크립트에서 설정) ----
     window.isMultiplayerGame = false;
@@ -116,12 +119,12 @@
     let lastPushedStateJSON = null;
     window.pushGameState = async function () {
       if (!window.isMultiplayerGame || !window.roomRef) return;
-      const json = JSON.stringify({ plays: currentPlays, extraCardsUsed, replayPair });
+      const json = JSON.stringify({ plays: currentPlays, extraCardsUsed, replayPair, roundNumber });
       if (json === lastPushedStateJSON) return; // 이미 같은 상태면 재전송 안 함 (에코 루프 방지)
       lastPushedStateJSON = json;
       try {
         await window.fsUpdateDoc(window.roomRef, {
-          game: { plays: currentPlays, extraCardsUsed, replayPair },
+          game: { plays: currentPlays, extraCardsUsed, replayPair, roundNumber },
         });
       } catch (err) {
         console.error('상태 동기화 실패:', err);
@@ -215,8 +218,16 @@
       setDealButtonsEnabled(true);
       document.getElementById('result').textContent = '';
       document.getElementById('duelSpotlight').style.display = 'none';
+      document.getElementById('nextRoundBtn').style.display = 'none';
       renderPlayers();
       pushGameState();
+    }
+
+    // 라운드가 끝난 뒤 "다음 라운드" 버튼으로 호출 - 새 카드로 다음 판 시작하고 라운드 번호 올림
+    function startNextRound() {
+      roundNumber += 1;
+      document.getElementById('roundLabel').textContent = `라운드 ${roundNumber}`;
+      dealAndRender();
     }
 
     function setDealButtonsEnabled(enabled) {
@@ -305,6 +316,7 @@
       setDealButtonsEnabled(true);
       document.getElementById('customForm').style.display = 'none';
       document.getElementById('duelSpotlight').style.display = 'none';
+      document.getElementById('nextRoundBtn').style.display = 'none';
       document.getElementById('result').textContent = '커스텀 조합 적용됨';
       renderPlayers();
       pushGameState();
@@ -410,6 +422,7 @@
       renderPlayers(dimIds, winnerSet);
       document.getElementById('result').textContent = `승자: ${winnerIds.map(id => `플레이어 ${id + 1}`).join(', ')}`;
       setDealButtonsEnabled(true);
+      document.getElementById('nextRoundBtn').style.display = 'inline-block';
       pushGameState();
     }
 
@@ -521,17 +534,9 @@
         return;
       }
 
-      const winnerIds = new Set(winners.map(w => w.id));
-      const dimIds = new Set(currentPlays.map(p => p.id).filter(id => !winnerIds.has(id)));
-
       renderDuelSpotlight(duels);
-      renderPlayers(dimIds, winnerIds);
-
-      const names = winners.map(w => `플레이어 ${w.id + 1}`).join(', ');
-      document.getElementById('result').textContent = `승자: ${names}`;
       replayPair = null;
-      setDealButtonsEnabled(true);
-      pushGameState();
+      finalizeRoundWinner(winners.map(w => w.id));
     }
 
     // 로비 스크립트가 Firestore에서 받은 게임 상태를 로컬 변수에 반영하고 다시 그림
@@ -539,8 +544,10 @@
       currentPlays = gameData.plays || [];
       extraCardsUsed = gameData.extraCardsUsed || [];
       replayPair = gameData.replayPair || null;
+      roundNumber = gameData.roundNumber || 1;
+      document.getElementById('roundLabel').textContent = `라운드 ${roundNumber}`;
       // 방금 받은 상태를 "이미 전송한 상태"로 표시해서, 재렌더링 중 나가는 push가 같은 내용을 다시 안 쏘게 함
-      lastPushedStateJSON = JSON.stringify({ plays: currentPlays, extraCardsUsed, replayPair });
+      lastPushedStateJSON = JSON.stringify({ plays: currentPlays, extraCardsUsed, replayPair, roundNumber });
       judgeAndRender();
     };
   </script>
