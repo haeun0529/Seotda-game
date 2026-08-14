@@ -43,9 +43,53 @@
   .custom-row select { padding: 4px 6px; border-radius: 4px; border: none; }
   .custom-row label.gwang-check { font-size: 12px; color: #f2c94c; display: flex; align-items: center; gap: 3px; }
   #customForm .apply-btn { background: #f2c94c; margin-top: 10px; }
+
+  #lobbyScreen { max-width: 480px; margin: 60px auto; }
+  #lobbyScreen h1 { margin-bottom: 40px; }
+  .lobby-box { background: #234a37; border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+  .lobby-box h2 { font-size: 15px; color: #f2c94c; margin: 0 0 14px; }
+  .lobby-box input { padding: 10px; font-size: 15px; border-radius: 6px; border: none; width: 100%; box-sizing: border-box; margin-bottom: 10px; text-align: center; }
+  .lobby-box button { width: 100%; background: #f2c94c; }
+  .join-box button { background: #4c8bf2; color: white; }
+  #lobbyError { color: #e05d5d; font-size: 13px; margin-top: 8px; min-height: 18px; }
+
+  #waitingScreen { display: none; max-width: 480px; margin: 60px auto; }
+  #waitingScreen .room-code { font-size: 32px; letter-spacing: 6px; color: #f2c94c; font-weight: bold; margin: 10px 0 24px; }
+  #waitingPlayers { text-align: left; background: #234a37; border-radius: 12px; padding: 16px; margin-bottom: 20px; }
+  #waitingPlayers .p-row { padding: 8px 4px; border-bottom: 1px solid #2f5b45; font-size: 14px; }
+  #waitingPlayers .p-row:last-child { border-bottom: none; }
+  #waitingPlayers .p-row .host-tag { color: #f2c94c; font-size: 11px; margin-left: 6px; }
+  #startGameBtn { background: #f2c94c; width: 100%; }
+  #startGameBtn:disabled { background: #555; cursor: not-allowed; }
+
+  #gameScreen { display: none; }
 </style>
 </head>
 <body>
+  <div id="lobbyScreen">
+    <h1>커스텀 섯다</h1>
+    <div class="lobby-box">
+      <h2>방 만들기</h2>
+      <input type="text" id="createNameInput" placeholder="닉네임">
+      <button onclick="handleCreateRoom()">방 만들기</button>
+    </div>
+    <div class="lobby-box join-box">
+      <h2>코드로 입장하기</h2>
+      <input type="text" id="joinCodeInput" placeholder="방 코드 (4자리)" maxlength="4">
+      <input type="text" id="joinNameInput" placeholder="닉네임">
+      <button onclick="handleJoinRoom()">입장하기</button>
+    </div>
+    <div id="lobbyError"></div>
+  </div>
+
+  <div id="waitingScreen">
+    <h1>대기실</h1>
+    <div class="room-code" id="roomCodeDisplay"></div>
+    <div id="waitingPlayers"></div>
+    <button id="startGameBtn" onclick="handleStartGame()" disabled>게임 시작 (5명 필요)</button>
+  </div>
+
+  <div id="gameScreen">
   <h1>커스텀 섯다</h1>
   <div class="sub">카드 분배 → 각자 카드 1장 선택(땡이면 자동) → 결과 확인</div>
 
@@ -57,6 +101,7 @@
   <div id="duelSpotlight"></div>
   <div class="players" id="players"></div>
   <div id="result"></div>
+
 
   <script src="logic.js"></script>
   <script>
@@ -436,6 +481,129 @@
       replayPair = null;
       setDealButtonsEnabled(true);
     }
+  </script>
+  </div>
+
+  <script type="module">
+    import { db } from "./firebase-config.js";
+    import {
+      doc, setDoc, getDoc, updateDoc, onSnapshot, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    const playerId = crypto.randomUUID();
+    let currentRoomCode = null;
+    let unsubscribeRoom = null;
+    let isHost = false;
+
+    function generateRoomCode() {
+      return String(Math.floor(1000 + Math.random() * 9000)); // 4자리
+    }
+
+    function withTimeout(promise, ms, label) {
+      return Promise.race([
+        promise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error(`${label} 응답이 ${ms/1000}초 동안 없어요 (네트워크 연결 문제로 보여요)`)), ms)),
+      ]);
+    }
+
+    window.handleCreateRoom = async function () {
+      const name = document.getElementById('createNameInput').value.trim();
+      if (!name) return showLobbyError('닉네임을 입력해주세요');
+
+      showLobbyError('방 만드는 중...');
+      try {
+        const code = generateRoomCode();
+        const roomRef = doc(db, 'rooms', code);
+        await withTimeout(setDoc(roomRef, {
+          hostId: playerId,
+          status: 'waiting',
+          createdAt: serverTimestamp(),
+          players: {
+            [playerId]: { name, isHost: true, joinedAt: Date.now() }
+          }
+        }), 8000, '방 생성');
+        isHost = true;
+        showLobbyError('');
+        enterWaitingRoom(code);
+      } catch (err) {
+        console.error('방 생성 실패:', err);
+        showLobbyError('방 생성 실패: ' + err.message);
+      }
+    };
+
+    window.handleJoinRoom = async function () {
+      const code = document.getElementById('joinCodeInput').value.trim();
+      const name = document.getElementById('joinNameInput').value.trim();
+      if (!code || code.length !== 4) return showLobbyError('4자리 방 코드를 입력해주세요');
+      if (!name) return showLobbyError('닉네임을 입력해주세요');
+
+      showLobbyError('입장하는 중...');
+      try {
+        const roomRef = doc(db, 'rooms', code);
+        const snap = await getDoc(roomRef);
+        if (!snap.exists()) return showLobbyError('존재하지 않는 방 코드예요');
+
+        const data = snap.data();
+        const playerCount = Object.keys(data.players || {}).length;
+        if (playerCount >= 5) return showLobbyError('이미 5명이 꽉 찬 방이에요');
+        if (data.status !== 'waiting') return showLobbyError('이미 시작된 게임이에요');
+
+        await updateDoc(roomRef, {
+          [`players.${playerId}`]: { name, isHost: false, joinedAt: Date.now() }
+        });
+        isHost = false;
+        showLobbyError('');
+        enterWaitingRoom(code);
+      } catch (err) {
+        console.error('입장 실패:', err);
+        showLobbyError('입장 실패: ' + err.message);
+      }
+    };
+
+    function showLobbyError(msg) {
+      document.getElementById('lobbyError').textContent = msg;
+    }
+
+    function enterWaitingRoom(code) {
+      currentRoomCode = code;
+      document.getElementById('lobbyScreen').style.display = 'none';
+      document.getElementById('waitingScreen').style.display = 'block';
+      document.getElementById('roomCodeDisplay').textContent = code;
+
+      const roomRef = doc(db, 'rooms', code);
+      unsubscribeRoom = onSnapshot(roomRef, (snap) => {
+        if (!snap.exists()) return;
+        const data = snap.data();
+        renderWaitingPlayers(data.players || {});
+
+        const startBtn = document.getElementById('startGameBtn');
+        const count = Object.keys(data.players || {}).length;
+        startBtn.disabled = !(isHost && count === 5);
+        startBtn.textContent = isHost
+          ? (count === 5 ? '게임 시작' : `게임 시작 (${count}/5명)`)
+          : `호스트가 시작하기를 기다리는 중... (${count}/5명)`;
+
+        if (data.status === 'playing') {
+          document.getElementById('waitingScreen').style.display = 'none';
+          document.getElementById('gameScreen').style.display = 'block';
+          if (unsubscribeRoom) unsubscribeRoom();
+        }
+      });
+    }
+
+    function renderWaitingPlayers(players) {
+      const box = document.getElementById('waitingPlayers');
+      box.innerHTML = Object.values(players)
+        .sort((a, b) => a.joinedAt - b.joinedAt)
+        .map(p => `<div class="p-row">${p.name}${p.isHost ? '<span class="host-tag">방장</span>' : ''}</div>`)
+        .join('');
+    }
+
+    window.handleStartGame = async function () {
+      if (!isHost || !currentRoomCode) return;
+      const roomRef = doc(db, 'rooms', currentRoomCode);
+      await updateDoc(roomRef, { status: 'playing' });
+    };
   </script>
 </body>
 </html>
