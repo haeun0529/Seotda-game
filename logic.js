@@ -68,10 +68,18 @@ function compareCombo(comboA, comboB) {
   return ta === tb ? 0 : (ta > tb ? 1 : -1);
 }
 
+// 손패 중 "낸 카드"가 아닌 나머지 한 장을 값 기준으로 찾음
+// (참조(===) 비교는 Firestore를 거치면 객체가 새로 생성되어 깨지므로 값 비교 사용)
+function findRemainCard(hand, playedCard) {
+  const idx = hand.findIndex(c => c.number === playedCard.number && c.isGwang === playedCard.isGwang);
+  return hand[idx === 0 ? 1 : 0];
+}
+
 // ----- 결투(1vs1 같은 숫자) 찾기 -----
 // singlePlays 중 같은 숫자를 낸 두 명씩 묶어서 반환. UI에서 결투 연출에도 재사용
 function findDuels(plays) {
   const singlePlays = plays.filter(p => p.played.length === 1);
+
   const numberGroups = {};
   singlePlays.forEach(p => {
     const n = p.played[0].number;
@@ -80,8 +88,8 @@ function findDuels(plays) {
   return Object.values(numberGroups)
     .filter(g => g.length === 2)
     .map(([p1, p2]) => {
-      const remain1 = p1.hand.find(c => c !== p1.played[0]);
-      const remain2 = p2.hand.find(c => c !== p2.played[0]);
+      const remain1 = findRemainCard(p1.hand, p1.played[0]);
+      const remain2 = findRemainCard(p2.hand, p2.played[0]);
       const combo1 = evaluateCombo(p1.played[0].number, remain1.number);
       const combo2 = evaluateCombo(p2.played[0].number, remain2.number);
       let cmp = compareCombo(combo1, combo2);

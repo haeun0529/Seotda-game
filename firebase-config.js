@@ -13,8 +13,6 @@ const firebaseConfig = {
 };
 
 export const app = initializeApp(firebaseConfig);
-// 일부 네트워크(회사망/VPN/방화벽)에서 기본 WebChannel 연결이 막혀 요청이
-// 응답 없이 걸려있는 문제가 있어, 자동으로 long-polling으로 전환되게 설정
 export const db = initializeFirestore(app, {
   experimentalAutoDetectLongPolling: true,
 });

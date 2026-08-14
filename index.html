@@ -95,7 +95,7 @@
 
   <button class="deal-btn" id="dealBtn" onclick="dealAndRender()">카드 분배</button>
   <button class="custom-btn" id="customBtn" onclick="toggleCustomForm()">커스텀 카드 설정</button>
-  <button class="judge-btn" onclick="judgeAndRender()">결과 확인</button>
+  <button class="judge-btn" onclick="judgeAndRender(true)">결과 확인</button>
 
   <div id="customForm"></div>
   <div id="duelSpotlight"></div>
@@ -109,6 +109,24 @@
     let currentPlays = []; // { id, hand, played } - played는 선택 전엔 빈 배열
     let replayPair = null; // 완전 동률로 재대결 중인 두 플레이어 id [id1, id2]
     let extraCardsUsed = []; // [{ playerId, card }] - 이번 라운드 타이브레이크로 뽑은 카드들
+
+    // ---- 멀티플레이 동기화 (roomRef/myGameId/isMultiplayerGame은 로비 스크립트에서 설정) ----
+    window.isMultiplayerGame = false;
+    window.myGameId = null;
+    let lastPushedStateJSON = null;
+    window.pushGameState = async function () {
+      if (!window.isMultiplayerGame || !window.roomRef) return;
+      const json = JSON.stringify({ plays: currentPlays, extraCardsUsed, replayPair });
+      if (json === lastPushedStateJSON) return; // 이미 같은 상태면 재전송 안 함 (에코 루프 방지)
+      lastPushedStateJSON = json;
+      try {
+        await window.fsUpdateDoc(window.roomRef, {
+          game: { plays: currentPlays, extraCardsUsed, replayPair },
+        });
+      } catch (err) {
+        console.error('상태 동기화 실패:', err);
+      }
+    };
 
     function getRemainingDeck() {
       const deck = createDeck();
@@ -198,6 +216,7 @@
       document.getElementById('result').textContent = '';
       document.getElementById('duelSpotlight').style.display = 'none';
       renderPlayers();
+      pushGameState();
     }
 
     function setDealButtonsEnabled(enabled) {
@@ -225,6 +244,7 @@
         `재대결! 플레이어 ${id1 + 1}, 플레이어 ${id2 + 1}만 새 카드를 받았어요 - 카드를 내고 "결과 확인"을 다시 눌러주세요`;
       const dimIds = new Set(currentPlays.map(p => p.id).filter(id => id !== id1 && id !== id2));
       renderPlayers(dimIds, new Set());
+      pushGameState();
     }
 
     function toggleCustomForm() {
@@ -287,9 +307,13 @@
       document.getElementById('duelSpotlight').style.display = 'none';
       document.getElementById('result').textContent = '커스텀 조합 적용됨';
       renderPlayers();
+      pushGameState();
     }
 
     function selectCard(playerIndex, cardIndex) {
+      if (window.isMultiplayerGame && window.myGameId !== null && playerIndex !== window.myGameId) {
+        return; // 멀티플레이 중엔 본인 카드만 낼 수 있음
+      }
       const play = currentPlays[playerIndex];
       if (isForcedPlay(play.hand)) return; // 땡/광땡이면 선택 불가(이미 자동)
       play.played = [play.hand[cardIndex]];
@@ -297,6 +321,7 @@
         ? new Set(currentPlays.map(p => p.id).filter(id => !replayPair.includes(id)))
         : new Set();
       renderPlayers(dimIds);
+      pushGameState();
     }
 
     function cardHtml(c) {
@@ -330,6 +355,12 @@
       });
     }
 
+    function getExtraCardsFor(id1, id2) {
+      const c1 = extraCardsUsed.find(e => e.playerId === id1);
+      const c2 = extraCardsUsed.find(e => e.playerId === id2);
+      return (c1 && c2) ? { c1: c1.card, c2: c2.card } : null;
+    }
+
     function renderDuelSpotlight(duels) {
       const box = document.getElementById('duelSpotlight');
       if (duels.length === 0) {
@@ -343,6 +374,7 @@
           const p1IsWinner = d.winner === d.p1;
           const tag1 = d.replay ? '' : (p1IsWinner ? ' ▶ 승' : '');
           const tag2 = d.replay ? '' : (!p1IsWinner ? ' ▶ 승' : '');
+          const existingExtra = d.replay ? getExtraCardsFor(d.p1.id, d.p2.id) : null;
           return `
             <div class="duel-vs">
               <div class="duel-side ${!d.replay && p1IsWinner ? 'win' : ''}">
@@ -357,12 +389,19 @@
                 <div class="combo">${d.combo2.name}${tag2}</div>
               </div>
             </div>
-            ${d.replay ? `<div style="color:#e05d5d;margin-top:12px;font-weight:bold;">완전 동률! 카드를 1장씩 추가로 뽑아 비교합니다</div>
+            ${d.replay && !existingExtra ? `<div style="color:#e05d5d;margin-top:12px;font-weight:bold;">완전 동률! 카드를 1장씩 추가로 뽑아 비교합니다</div>
               <button class="replay-btn" onclick="drawExtraCards(${d.p1.id},${d.p2.id})">카드 1장씩 추가로 뽑기</button>
               <button class="custom-btn" onclick="toggleExtraCustomForm(${d.p1.id},${d.p2.id})">추가 카드 직접 설정</button>
               <div id="extraCustomForm_${d.p1.id}_${d.p2.id}"></div>` : ''}
+            <div id="extraOutcome_${d.p1.id}_${d.p2.id}"></div>
             `;
         }).join('<hr style="border-color:#5a3d1a;margin:16px 0">');
+
+      // 이미 타이브레이크 카드가 뽑혀있는 결투는(다른 사람이 뽑았더라도) 그 결과를 그대로 재현
+      duels.filter(d => d.replay).forEach(d => {
+        const extra = getExtraCardsFor(d.p1.id, d.p2.id);
+        if (extra) renderExtraOutcome(d.p1.id, d.p2.id, extra.c1, extra.c2, `extraOutcome_${d.p1.id}_${d.p2.id}`);
+      });
     }
 
     function finalizeRoundWinner(winnerIds) {
@@ -371,15 +410,14 @@
       renderPlayers(dimIds, winnerSet);
       document.getElementById('result').textContent = `승자: ${winnerIds.map(id => `플레이어 ${id + 1}`).join(', ')}`;
       setDealButtonsEnabled(true);
+      pushGameState();
     }
 
-    // 결투 완전동률 타이브레이크에서 뽑힌 두 장(c1,c2)을 처리 (랜덤/커스텀 공용)
-    function processExtraCards(id1, id2, c1, c2) {
-      extraCardsUsed.push({ playerId: id1, card: c1 });
-      extraCardsUsed.push({ playerId: id2, card: c2 });
-      const box = document.getElementById('duelSpotlight');
-
-      box.innerHTML += `<div class="duel-vs" style="margin-top:20px;">
+    // 결투 완전동률 타이브레이크에서 뽑힌 두 장(c1,c2)의 결과를 특정 영역에 렌더링 (초기 클릭/재현 공용)
+    function renderExtraOutcome(id1, id2, c1, c2, targetElId) {
+      const target = document.getElementById(targetElId);
+      if (!target) return;
+      let html = `<div class="duel-vs" style="margin-top:20px;">
           <div class="duel-side"><div class="name">플레이어 ${id1 + 1} 추가 카드</div>${cardHtml(c1)}</div>
           <div class="duel-x">VS</div>
           <div class="duel-side"><div class="name">플레이어 ${id2 + 1} 추가 카드</div>${cardHtml(c2)}</div>
@@ -387,20 +425,28 @@
 
       // 이 추가 카드로 필드 광이 3장이 됐으면, 결투 결과와 무관하게 광 없는 사람들이 승리
       if (totalFieldGwangCount() === 3) {
-        box.innerHTML += `<div style="margin-top:12px;color:#f2c94c;font-weight:bold;">필드에 광 카드 3장 완성! 결투 결과와 무관하게 광 안 낸 사람들이 승리합니다</div>`;
+        target.innerHTML = html + `<div style="margin-top:12px;color:#f2c94c;font-weight:bold;">필드에 광 카드 3장 완성! 결투 결과와 무관하게 광 안 낸 사람들이 승리합니다</div>`;
         checkGwangOverride();
         return;
       }
 
       if (c1.number === c2.number) {
-        box.innerHTML +=
+        target.innerHTML = html +
           `<div style="margin-top:12px;color:#e05d5d;font-weight:bold;">추가 카드도 동률! 이 두 명만 카드를 새로 받아 재대결합니다</div>
            <button class="replay-btn" onclick="startReplay(${id1},${id2})">재대결 시작</button>`;
       } else {
         const winnerId = c1.number > c2.number ? id1 : id2;
-        box.innerHTML += `<div style="margin-top:12px;color:#f2c94c;font-weight:bold;">숫자가 더 높은 플레이어 ${winnerId + 1} 승리</div>`;
+        target.innerHTML = html + `<div style="margin-top:12px;color:#f2c94c;font-weight:bold;">숫자가 더 높은 플레이어 ${winnerId + 1} 승리</div>`;
         finalizeRoundWinner([winnerId]);
       }
+    }
+
+    // 결투 완전동률 타이브레이크로 새로 뽑힌 두 장(c1,c2)을 기록하고 전체를 다시 평가 (랜덤/커스텀 공용)
+    function processExtraCards(id1, id2, c1, c2) {
+      extraCardsUsed.push({ playerId: id1, card: c1 });
+      extraCardsUsed.push({ playerId: id2, card: c2 });
+      pushGameState(); // 추가로 뽑은 카드부터 바로 동기화 (모두가 같은 카드를 봐야 함)
+      judgeAndRender(); // renderDuelSpotlight가 이 카드를 보고 renderExtraOutcome까지 이어서 처리함
     }
 
     function drawExtraCards(id1, id2) {
@@ -445,14 +491,19 @@
       processExtraCards(id1, id2, c1, c2);
     }
 
-    function judgeAndRender() {
+    function judgeAndRender(fromButtonClick) {
       // 재대결 모드면 재대결 중인 두 명만 판정 (다른 3명은 이미 아웃된 상태 유지)
       const targetPlays = replayPair
         ? replayPair.map(id => currentPlays[id])
         : currentPlays;
 
+      if (targetPlays.length === 0) return; // 아직 아무 상태도 없음 (게임 시작 직후 첫 프레임 등)
+
       if (targetPlays.some(p => p.played.length === 0)) {
-        document.getElementById('result').textContent = '아직 카드를 안 낸 플레이어가 있어요!';
+        // 아직 다 안 냈어도 손패/버튼은 항상 최신 상태로 보여줘야 함 (특히 원격에서 상태 로드된 경우)
+        document.getElementById('duelSpotlight').style.display = 'none';
+        renderPlayers();
+        if (fromButtonClick) document.getElementById('result').textContent = '아직 카드를 안 낸 플레이어가 있어요!';
         return;
       }
 
@@ -480,7 +531,18 @@
       document.getElementById('result').textContent = `승자: ${names}`;
       replayPair = null;
       setDealButtonsEnabled(true);
+      pushGameState();
     }
+
+    // 로비 스크립트가 Firestore에서 받은 게임 상태를 로컬 변수에 반영하고 다시 그림
+    window.loadGameState = function (gameData) {
+      currentPlays = gameData.plays || [];
+      extraCardsUsed = gameData.extraCardsUsed || [];
+      replayPair = gameData.replayPair || null;
+      // 방금 받은 상태를 "이미 전송한 상태"로 표시해서, 재렌더링 중 나가는 push가 같은 내용을 다시 안 쏘게 함
+      lastPushedStateJSON = JSON.stringify({ plays: currentPlays, extraCardsUsed, replayPair });
+      judgeAndRender();
+    };
   </script>
   </div>
 
@@ -571,6 +633,9 @@
       document.getElementById('roomCodeDisplay').textContent = code;
 
       const roomRef = doc(db, 'rooms', code);
+      window.fsUpdateDoc = updateDoc; // logic/게임 스크립트에서 상태 저장할 때 씀
+      let gameScreenShown = false;
+
       unsubscribeRoom = onSnapshot(roomRef, (snap) => {
         if (!snap.exists()) return;
         const data = snap.data();
@@ -584,9 +649,23 @@
           : `호스트가 시작하기를 기다리는 중... (${count}/5명)`;
 
         if (data.status === 'playing') {
-          document.getElementById('waitingScreen').style.display = 'none';
-          document.getElementById('gameScreen').style.display = 'block';
-          if (unsubscribeRoom) unsubscribeRoom();
+          if (!gameScreenShown) {
+            gameScreenShown = true;
+            document.getElementById('waitingScreen').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'block';
+
+            window.isMultiplayerGame = true;
+            window.myGameId = (data.idByPlayer || {})[playerId];
+            window.roomRef = roomRef;
+
+            const dealBtn = document.getElementById('dealBtn');
+            if (dealBtn) dealBtn.style.display = 'none'; // 멀티플레이 중엔 랜덤 재분배 버튼 숨김
+            const sub = document.querySelector('#gameScreen .sub');
+            if (sub && window.myGameId !== null && window.myGameId !== undefined) {
+              sub.textContent = `나는 플레이어 ${window.myGameId + 1}입니다 - 내 카드만 낼 수 있어요`;
+            }
+          }
+          if (data.game) window.loadGameState(data.game);
         }
       });
     }
@@ -602,7 +681,29 @@
     window.handleStartGame = async function () {
       if (!isHost || !currentRoomCode) return;
       const roomRef = doc(db, 'rooms', currentRoomCode);
-      await updateDoc(roomRef, { status: 'playing' });
+      const snap = await getDoc(roomRef);
+      if (!snap.exists()) return;
+      const data = snap.data();
+
+      // 참가 순서(joinedAt) 기준으로 플레이어 1~5 자리 배정
+      const idByPlayer = {};
+      Object.entries(data.players || {})
+        .sort((a, b) => a[1].joinedAt - b[1].joinedAt)
+        .forEach(([pid], idx) => { idByPlayer[pid] = idx; });
+
+      const deck = window.createDeck();
+      const hands = window.dealHands(deck, 5);
+      const plays = hands.map((hand, i) => ({
+        id: i,
+        hand,
+        played: window.isForcedPlay(hand) ? [hand[0], hand[1]] : [],
+      }));
+
+      await updateDoc(roomRef, {
+        status: 'playing',
+        idByPlayer,
+        game: { plays, extraCardsUsed: [], replayPair: null },
+      });
     };
   </script>
 </body>
