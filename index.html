@@ -548,31 +548,48 @@
       box.innerHTML = html;
     }
 
-    function applyCustomHands() {
-      currentPlays = [];
+    async function applyCustomHands() {
+      const hands = [];
       for (let i = 0; i < 5; i++) {
         const num0 = Number(document.getElementById(`c${i}_0_num`).value);
         const gwang0 = document.getElementById(`c${i}_0_gwang`).checked;
         const num1 = Number(document.getElementById(`c${i}_1_num`).value);
         const gwang1 = document.getElementById(`c${i}_1_gwang`).checked;
-        const hand = [
+        hands.push([
           { number: num0, isGwang: gwang0 },
           { number: num1, isGwang: gwang1 },
-        ];
-        currentPlays.push({
+        ]);
+      }
+
+      if (window.isMultiplayerGame) {
+        // 각자 손패는 비공개 문서에 따로 저장 (공개 데이터엔 낸 카드만 실림) - dealAndRender와 동일한 방식
+        for (let i = 0; i < 5; i++) {
+          const uid = window.uidByGameId[i];
+          if (uid) await window.writePrivateHand(uid, hands[i]);
+        }
+        currentPlays = hands.map((hand, i) => ({
+          id: i,
+          played: isForcedPlay(hand) ? [hand[0], hand[1]] : [],
+        }));
+        if (window.myGameId !== null) myHand = hands[window.myGameId];
+      } else {
+        currentPlays = hands.map((hand, i) => ({
           id: i,
           hand,
           played: isForcedPlay(hand) ? [hand[0], hand[1]] : [],
-        });
+        }));
       }
+
       replayPair = null;
       extraCardsUsed = [];
+      dealtAt = Date.now();
       setDealButtonsEnabled(true);
       document.getElementById('customForm').style.display = 'none';
       document.getElementById('duelSpotlight').style.display = 'none';
       document.getElementById('nextRoundBtn').style.display = 'none';
       document.getElementById('result').textContent = '커스텀 조합 적용됨';
       renderPlayers();
+      scheduleAutoPlay();
       pushGameState();
     }
 
