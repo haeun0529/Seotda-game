@@ -73,6 +73,14 @@
     <div class="lobby-box">
       <h2>방 만들기</h2>
       <input type="text" id="createNameInput" placeholder="닉네임" maxlength="10">
+      <div style="text-align:left;font-size:13px;color:#a8c9b8;margin-bottom:10px;">
+        <label style="display:block;margin-bottom:6px;cursor:pointer;">
+          <input type="radio" name="roomMode" value="custom" checked> 커스텀 모드 - 방장이 라운드마다 모드를 직접 선택
+        </label>
+        <label style="display:block;cursor:pointer;">
+          <input type="radio" name="roomMode" value="random"> 랜덤 모드 - 라운드마다 일반/랜덤카드공개/광갯수공개 중 자동으로 선택(50/25/25%)
+        </label>
+      </div>
       <button onclick="handleCreateRoom()">방 만들기</button>
     </div>
     <div class="lobby-box join-box">
@@ -88,15 +96,32 @@
     <h1>대기실</h1>
     <div class="room-code" id="roomCodeDisplay"></div>
     <div id="waitingPlayers"></div>
+    <div id="round1ModeBox" style="display:none;text-align:left;font-size:13px;color:#a8c9b8;margin-bottom:14px;">
+      <div style="margin-bottom:6px;">첫 라운드 모드 선택 (방장)</div>
+      <select id="round1ModeSelect" style="width:100%;padding:8px;border-radius:6px;border:none;">
+        <option value="normal">일반 모드</option>
+        <option value="randomReveal">랜덤 카드 공개 모드</option>
+        <option value="gwangCount">광 갯수 공개 모드</option>
+      </select>
+    </div>
     <button id="startGameBtn" onclick="handleStartGame()" disabled>게임 시작 (5명 필요)</button>
   </div>
 
   <div id="gameScreen">
   <h1>커스텀 섯다</h1>
+  <div id="roundModeBadge" style="display:inline-block;background:#4c8bf2;color:white;font-size:12px;font-weight:bold;padding:3px 10px;border-radius:12px;margin-bottom:8px;">일반 모드</div>
   <div class="sub">가장 큰 숫자를 낸 사람이 이깁니다! 하지만 광은 아닐지도?</div>
   <div id="roundLabel" style="color:#f2c94c;font-weight:bold;margin-bottom:10px;">라운드 1</div>
   <div id="scoreboard" style="margin-bottom:16px;"></div>
+  <div id="modeRevealBox" style="display:none;background:#3a2412;border:2px solid #f2c94c;border-radius:10px;padding:14px;margin-bottom:16px;"></div>
   <div id="autoPlayTimer" style="color:#e05d5d;font-weight:bold;margin-bottom:10px;"></div>
+  <div id="nextRoundModeBox" style="display:none;text-align:center;margin-bottom:10px;">
+    <select id="nextRoundModeSelect" style="padding:8px;border-radius:6px;border:none;">
+      <option value="normal">일반 모드</option>
+      <option value="randomReveal">랜덤 카드 공개 모드</option>
+      <option value="gwangCount">광 갯수 공개 모드</option>
+    </select>
+  </div>
 
   <button class="deal-btn" id="dealBtn" onclick="dealAndRender()">카드 분배</button>
   <button class="custom-btn" id="customBtn" onclick="toggleCustomForm()">커스텀 카드 설정</button>
@@ -139,6 +164,73 @@
     let countdownInterval = null;
     const AUTO_PLAY_MS = 10000;
 
+    // ---- 라운드 모드 (일반 / 랜덤 카드 공개 / 광 갯수 공개) ----
+    let currentRoundMode = 'normal';
+    let randomReveal = null; // [{ id, card }] - 랜덤 카드 공개 모드일 때
+    let gwangCountRevealed = null; // 숫자 - 광 갯수 공개 모드일 때
+
+    window.weightedPickMode = function () {
+      const r = Math.random();
+      if (r < 0.5) return 'normal';
+      if (r < 0.75) return 'randomReveal';
+      return 'gwangCount';
+    };
+
+    // 모드별 공개 데이터를 계산 (딜 시점에만 호출 - 5명 손패를 다 아는 쪽에서만 실행 가능)
+    window.computeModeReveal = function (mode, hands) {
+      if (mode === 'randomReveal') {
+        const count = 1 + Math.floor(Math.random() * 5); // 1~5명
+        const ids = [0, 1, 2, 3, 4];
+        for (let i = ids.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [ids[i], ids[j]] = [ids[j], ids[i]];
+        }
+        const chosenIds = ids.slice(0, count);
+        const reveal = chosenIds.map(id => ({
+          id,
+          card: hands[id][Math.random() < 0.5 ? 0 : 1],
+        }));
+        return { roundMode: 'randomReveal', randomReveal: reveal, gwangCountRevealed: null };
+      }
+      if (mode === 'gwangCount') {
+        let count = 0;
+        hands.forEach(h => { count += h.filter(c => c.isGwang).length; });
+        return { roundMode: 'gwangCount', randomReveal: null, gwangCountRevealed: count };
+      }
+      return { roundMode: 'normal', randomReveal: null, gwangCountRevealed: null };
+    };
+
+    // 지금 이 방/라운드에서 쓸 모드를 결정 (커스텀 모드면 선택창 값, 랜덤 모드면 확률 추첨)
+    function getChosenRoundMode() {
+      if (!window.isMultiplayerGame) return 'normal';
+      if (window.roomMode === 'random') return window.weightedPickMode();
+      const sel = document.getElementById('nextRoundModeSelect');
+      return sel ? sel.value : 'normal';
+    }
+
+    function renderRoundModeBadge() {
+      const badge = document.getElementById('roundModeBadge');
+      if (!badge) return;
+      const labels = { normal: '일반 모드', randomReveal: '랜덤 카드 공개 모드', gwangCount: '광 갯수 공개 모드' };
+      badge.textContent = labels[currentRoundMode] || '일반 모드';
+    }
+
+    function renderModeReveal() {
+      const box = document.getElementById('modeRevealBox');
+      if (!box) return;
+      if (currentRoundMode === 'randomReveal' && randomReveal && randomReveal.length) {
+        box.style.display = 'block';
+        box.innerHTML = `<div style="color:#f2c94c;font-weight:bold;margin-bottom:8px;">🎲 랜덤 모드에 의해 공개되었습니다</div>` +
+          randomReveal.map(r => `<span style="margin-right:14px;">${playerLabel(r.id)}: ${cardHtml(r.card)}</span>`).join('');
+      } else if (currentRoundMode === 'gwangCount' && gwangCountRevealed !== null) {
+        box.style.display = 'block';
+        box.innerHTML = `<div style="color:#f2c94c;font-weight:bold;">✨ 이번 라운드 손패 속 광 카드: ${gwangCountRevealed}장</div>`;
+      } else {
+        box.style.display = 'none';
+        box.innerHTML = '';
+      }
+    }
+
     // ---- 멀티플레이 동기화 (roomRef/myGameId/isMultiplayerGame은 로비 스크립트에서 설정) ----
     window.isMultiplayerGame = false;
     window.myGameId = null;
@@ -146,12 +238,15 @@
     let lastPushedStateJSON = null;
     window.pushGameState = async function () {
       if (!window.isMultiplayerGame || !window.roomRef) return;
-      const json = JSON.stringify({ plays: currentPlays, extraCardsUsed, replayPair, roundNumber, scores, roundScored, dealtAt });
+      const json = JSON.stringify({ plays: currentPlays, extraCardsUsed, replayPair, roundNumber, scores, roundScored, dealtAt, currentRoundMode, randomReveal, gwangCountRevealed });
       if (json === lastPushedStateJSON) return; // 이미 같은 상태면 재전송 안 함 (에코 루프 방지)
       lastPushedStateJSON = json;
       try {
         await window.fsUpdateDoc(window.roomRef, {
-          game: { plays: currentPlays, extraCardsUsed, replayPair, roundNumber, scores, scored: roundScored, dealtAt },
+          game: {
+            plays: currentPlays, extraCardsUsed, replayPair, roundNumber, scores, scored: roundScored, dealtAt,
+            roundMode: currentRoundMode, randomReveal, gwangCountRevealed,
+          },
         });
       } catch (err) {
         console.error('상태 동기화 실패:', err);
@@ -323,6 +418,12 @@
       const deck = createDeck();
       currentHands = dealHands(deck, 5);
 
+      const chosenMode = getChosenRoundMode();
+      const reveal = window.computeModeReveal(chosenMode, currentHands);
+      currentRoundMode = reveal.roundMode;
+      randomReveal = reveal.randomReveal;
+      gwangCountRevealed = reveal.gwangCountRevealed;
+
       if (window.isMultiplayerGame) {
         // 각자 손패는 비공개 문서에 따로 저장 (공개 데이터엔 낸 카드만 실림)
         for (let i = 0; i < 5; i++) {
@@ -352,8 +453,11 @@
       document.getElementById('result').textContent = '';
       document.getElementById('duelSpotlight').style.display = 'none';
       document.getElementById('nextRoundBtn').style.display = 'none';
+      document.getElementById('nextRoundModeBox').style.display = 'none';
       renderPlayers();
       renderScoreboard();
+      renderRoundModeBadge();
+      renderModeReveal();
       scheduleAutoPlay();
       pushGameState();
     }
@@ -606,6 +710,9 @@
       // 멀티플레이 중엔 방장만 다음 라운드 버튼을 봄 (로컬 테스트 중엔 항상 보임)
       const canShowNextRound = !window.isMultiplayerGame || window.isHost;
       document.getElementById('nextRoundBtn').style.display = canShowNextRound ? 'inline-block' : 'none';
+      // 커스텀 모드 방이면, 방장에게 다음 라운드에 쓸 모드 선택창도 같이 보여줌
+      const showModeSelect = canShowNextRound && window.isMultiplayerGame && window.roomMode === 'custom';
+      document.getElementById('nextRoundModeBox').style.display = showModeSelect ? 'block' : 'none';
       pushGameState();
     }
 
@@ -755,11 +862,16 @@
       scores = gameData.scores || {};
       roundScored = gameData.scored || false;
       dealtAt = gameData.dealtAt || null;
+      currentRoundMode = gameData.roundMode || 'normal';
+      randomReveal = gameData.randomReveal || null;
+      gwangCountRevealed = gameData.gwangCountRevealed ?? null;
       document.getElementById('roundLabel').textContent = `라운드 ${roundNumber}`;
       renderScoreboard();
+      renderRoundModeBadge();
+      renderModeReveal();
       scheduleAutoPlay();
       // 방금 받은 상태를 "이미 전송한 상태"로 표시해서, 재렌더링 중 나가는 push가 같은 내용을 다시 안 쏘게 함
-      lastPushedStateJSON = JSON.stringify({ plays: currentPlays, extraCardsUsed, replayPair, roundNumber, scores, roundScored, dealtAt });
+      lastPushedStateJSON = JSON.stringify({ plays: currentPlays, extraCardsUsed, replayPair, roundNumber, scores, roundScored, dealtAt, currentRoundMode, randomReveal, gwangCountRevealed });
       judgeAndRender();
     };
   </script>
@@ -822,11 +934,14 @@
 
       showLobbyError('방 만드는 중...');
       try {
+        const selectedModeInput = document.querySelector('input[name="roomMode"]:checked');
+        const roomMode = selectedModeInput ? selectedModeInput.value : 'custom';
         const code = generateRoomCode();
         const roomRef = doc(db, 'rooms', code);
         await withTimeout(setDoc(roomRef, {
           hostId: playerId,
           status: 'waiting',
+          roomMode,
           createdAt: serverTimestamp(),
           expiresAt: new Date(Date.now() + 30 * 60 * 1000), // 30분 안에 게임 시작 안 하면 TTL로 자동 삭제
           players: {
@@ -906,6 +1021,7 @@
         if (!snap.exists()) return;
         const data = snap.data();
         renderWaitingPlayers(data.players || {});
+        window.roomMode = data.roomMode || 'custom';
 
         const startBtn = document.getElementById('startGameBtn');
         const count = Object.keys(data.players || {}).length;
@@ -913,6 +1029,9 @@
         startBtn.textContent = isHost
           ? (count === 5 ? '게임 시작' : `게임 시작 (${count}/5명)`)
           : `호스트가 시작하기를 기다리는 중... (${count}/5명)`;
+
+        const round1ModeBox = document.getElementById('round1ModeBox');
+        if (round1ModeBox) round1ModeBox.style.display = (isHost && window.roomMode === 'custom') ? 'block' : 'none';
 
         if (data.status === 'playing') {
           if (!gameScreenShown) {
@@ -977,6 +1096,17 @@
         played: window.isForcedPlay(hand) ? [hand[0], hand[1]] : [],
       }));
 
+      // 첫 라운드 모드 결정: 랜덤 모드 방이면 확률 추첨, 커스텀 모드 방이면 대기실에서 고른 값
+      const roomMode = data.roomMode || 'custom';
+      let round1Mode;
+      if (roomMode === 'random') {
+        round1Mode = window.weightedPickMode();
+      } else {
+        const sel = document.getElementById('round1ModeSelect');
+        round1Mode = sel ? sel.value : 'normal';
+      }
+      const reveal = window.computeModeReveal(round1Mode, hands);
+
       await updateDoc(roomRef, {
         status: 'playing',
         idByPlayer,
@@ -986,6 +1116,7 @@
         game: {
           plays, extraCardsUsed: [], replayPair: null, roundNumber: 1,
           scores: { 0: 200, 1: 200, 2: 200, 3: 200, 4: 200 }, scored: false, dealtAt: Date.now(),
+          roundMode: reveal.roundMode, randomReveal: reveal.randomReveal, gwangCountRevealed: reveal.gwangCountRevealed,
         },
       });
     };
