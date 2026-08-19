@@ -93,7 +93,7 @@
 
   <div id="gameScreen">
   <h1>커스텀 섯다</h1>
-  <div class="sub">카드 분배 → 각자 카드 1장 선택(땡이면 자동) → 결과 확인</div>
+  <div class="sub">가장 큰 숫자를 낸 사람이 이깁니다! 하지만 광은 아닐지도?</div>
   <div id="roundLabel" style="color:#f2c94c;font-weight:bold;margin-bottom:10px;">라운드 1</div>
   <div id="scoreboard" style="margin-bottom:16px;"></div>
   <div id="autoPlayTimer" style="color:#e05d5d;font-weight:bold;margin-bottom:10px;"></div>
@@ -929,11 +929,6 @@
 
             const dealBtn = document.getElementById('dealBtn');
             if (dealBtn) dealBtn.style.display = 'none'; // 멀티플레이 중엔 랜덤 재분배 버튼 숨김
-            const sub = document.querySelector('#gameScreen .sub');
-            if (sub && window.myGameId !== null && window.myGameId !== undefined) {
-              const myName = window.playerNames[window.myGameId] || `플레이어 ${window.myGameId + 1}`;
-              sub.textContent = `나는 ${myName}입니다 - 내 카드만 낼 수 있어요`;
-            }
           }
           if (data.playerNames) window.playerNames = data.playerNames;
           if (data.uidByGameId) window.uidByGameId = data.uidByGameId;
