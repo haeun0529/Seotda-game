@@ -21,6 +21,7 @@
   .card.normal { background: #fff; color: #222; }
   .card.gwang { background: #f2c94c; color: #7a3e00; }
   .card.back { background: repeating-linear-gradient(45deg, #1b3a2b, #1b3a2b 4px, #234a37 4px, #234a37 8px); color: #5a7a68; border: 1px solid #3a6650; }
+  .score-chip { display: inline-block; background: #234a37; border-radius: 20px; padding: 6px 14px; margin: 0 4px; font-size: 13px; color: #f2c94c; font-weight: bold; }
   .card.played { outline: 3px solid #4c8bf2; }
   .status { font-size: 12px; color: #a8c9b8; margin-top: 6px; }
   #result { font-size: 18px; margin-top: 20px; color: #f2c94c; font-weight: bold; }
@@ -94,6 +95,7 @@
   <h1>커스텀 섯다</h1>
   <div class="sub">카드 분배 → 각자 카드 1장 선택(땡이면 자동) → 결과 확인</div>
   <div id="roundLabel" style="color:#f2c94c;font-weight:bold;margin-bottom:10px;">라운드 1</div>
+  <div id="scoreboard" style="margin-bottom:16px;"></div>
 
   <button class="deal-btn" id="dealBtn" onclick="dealAndRender()">카드 분배</button>
   <button class="custom-btn" id="customBtn" onclick="toggleCustomForm()">커스텀 카드 설정</button>
@@ -109,6 +111,22 @@
   <script src="logic.js"></script>
   <script>
     let currentHands = [];
+    let scores = {}; // { gameId: 점수 } - 방 안에서 라운드가 바뀌어도 유지됨 (새 방에서만 초기화)
+    let roundScored = false; // 이번 라운드 점수를 이미 반영했는지 (중복 반영 방지)
+
+    function initScoresIfNeeded() {
+      for (let i = 0; i < 5; i++) {
+        if (scores[i] === undefined) scores[i] = 200;
+      }
+    }
+
+    function renderScoreboard() {
+      const box = document.getElementById('scoreboard');
+      if (!box) return;
+      box.innerHTML = Array.from({ length: 5 }, (_, i) =>
+        `<span class="score-chip">${playerLabel(i)}: ${scores[i] ?? 200}점</span>`
+      ).join('');
+    }
     let currentPlays = []; // { id, uid, played, revealedRemain? } - 멀티플레이에선 hand가 없음(비공개라서)
     let currentPlaysForLogic = []; // 판정용 - 결투 당사자는 hand를 채워서 씀
     let myHand = []; // 내 손패 (비공개 문서에서만 읽어옴, 절대 공개 데이터에 안 실림)
@@ -123,12 +141,12 @@
     let lastPushedStateJSON = null;
     window.pushGameState = async function () {
       if (!window.isMultiplayerGame || !window.roomRef) return;
-      const json = JSON.stringify({ plays: currentPlays, extraCardsUsed, replayPair, roundNumber });
+      const json = JSON.stringify({ plays: currentPlays, extraCardsUsed, replayPair, roundNumber, scores, roundScored });
       if (json === lastPushedStateJSON) return; // 이미 같은 상태면 재전송 안 함 (에코 루프 방지)
       lastPushedStateJSON = json;
       try {
         await window.fsUpdateDoc(window.roomRef, {
-          game: { plays: currentPlays, extraCardsUsed, replayPair, roundNumber },
+          game: { plays: currentPlays, extraCardsUsed, replayPair, roundNumber, scores, scored: roundScored },
         });
       } catch (err) {
         console.error('상태 동기화 실패:', err);
@@ -284,11 +302,14 @@
 
       replayPair = null;
       extraCardsUsed = [];
+      initScoresIfNeeded(); // 이미 있는 점수는 그대로 두고, 없을 때만(방 첫 시작) 200점으로 채움
+      roundScored = false; // 새 라운드니까 점수 반영 플래그 초기화
       setDealButtonsEnabled(true);
       document.getElementById('result').textContent = '';
       document.getElementById('duelSpotlight').style.display = 'none';
       document.getElementById('nextRoundBtn').style.display = 'none';
       renderPlayers();
+      renderScoreboard();
       pushGameState();
     }
 
@@ -512,6 +533,16 @@
     function finalizeRoundWinner(winnerIds) {
       const winnerSet = new Set(winnerIds);
       const dimIds = new Set(currentPlays.map(p => p.id).filter(id => !winnerSet.has(id)));
+
+      if (!roundScored) {
+        initScoresIfNeeded();
+        currentPlays.forEach(p => {
+          scores[p.id] = (scores[p.id] ?? 200) + (winnerSet.has(p.id) ? 10 : -10);
+        });
+        roundScored = true;
+      }
+      renderScoreboard();
+
       renderPlayers(dimIds, winnerSet);
       document.getElementById('result').textContent = `승자: ${winnerIds.map(id => playerLabel(id)).join(', ')}`;
       setDealButtonsEnabled(true);
@@ -664,9 +695,12 @@
       extraCardsUsed = gameData.extraCardsUsed || [];
       replayPair = gameData.replayPair || null;
       roundNumber = gameData.roundNumber || 1;
+      scores = gameData.scores || {};
+      roundScored = gameData.scored || false;
       document.getElementById('roundLabel').textContent = `라운드 ${roundNumber}`;
+      renderScoreboard();
       // 방금 받은 상태를 "이미 전송한 상태"로 표시해서, 재렌더링 중 나가는 push가 같은 내용을 다시 안 쏘게 함
-      lastPushedStateJSON = JSON.stringify({ plays: currentPlays, extraCardsUsed, replayPair, roundNumber });
+      lastPushedStateJSON = JSON.stringify({ plays: currentPlays, extraCardsUsed, replayPair, roundNumber, scores, roundScored });
       judgeAndRender();
     };
   </script>
@@ -675,7 +709,8 @@
   <script type="module">
     import { db, ensureSignedIn } from "./firebase-config.js";
     import {
-      doc, setDoc, getDoc, updateDoc, onSnapshot, serverTimestamp
+      doc, setDoc, getDoc, updateDoc, onSnapshot, serverTimestamp, deleteField,
+      collection, query, where, getDocs, deleteDoc
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
     let playerId = null; // 익명 로그인 후 uid로 채워짐
@@ -684,7 +719,31 @@
     let unsubscribeMyHand = null;
     let isHost = false;
 
-    const readyPromise = ensureSignedIn().then(user => { playerId = user.uid; });
+    const readyPromise = ensureSignedIn().then(user => {
+      playerId = user.uid;
+      cleanupStaleRooms(); // 로그인 직후, 30분 넘은 대기중 방들을 한 번 정리
+    });
+
+    // 결제(빌링) 없이 오래된 방을 지우는 방법 - Firestore TTL은 유료 요금제가 필요해서,
+    // 대신 누군가 로비에 접속할 때마다 "30분 넘게 대기중인 방"을 찾아서 지움
+    async function cleanupStaleRooms() {
+      try {
+        const q = query(collection(db, 'rooms'), where('status', '==', 'waiting'));
+        const snap = await getDocs(q);
+        const cutoff = Date.now() - 30 * 60 * 1000;
+        const deletions = [];
+        snap.forEach(docSnap => {
+          const data = docSnap.data();
+          const createdMs = data.createdAt && data.createdAt.toMillis ? data.createdAt.toMillis() : null;
+          if (createdMs !== null && createdMs < cutoff) {
+            deletions.push(deleteDoc(docSnap.ref));
+          }
+        });
+        if (deletions.length) await Promise.all(deletions);
+      } catch (err) {
+        console.error('오래된 방 정리 중 오류(무시 가능):', err);
+      }
+    }
 
     function generateRoomCode() {
       return String(Math.floor(1000 + Math.random() * 9000)); // 4자리
@@ -710,6 +769,7 @@
           hostId: playerId,
           status: 'waiting',
           createdAt: serverTimestamp(),
+          expiresAt: new Date(Date.now() + 30 * 60 * 1000), // 30분 안에 게임 시작 안 하면 TTL로 자동 삭제
           players: {
             [playerId]: { name, isHost: true, joinedAt: Date.now() }
           }
@@ -868,7 +928,11 @@
         idByPlayer,
         playerNames,
         uidByGameId,
-        game: { plays, extraCardsUsed: [], replayPair: null, roundNumber: 1 },
+        expiresAt: deleteField(), // 게임이 시작됐으니 30분 만료 타이머는 해제 (진행 중에 삭제되면 안 되니까)
+        game: {
+          plays, extraCardsUsed: [], replayPair: null, roundNumber: 1,
+          scores: { 0: 200, 1: 200, 2: 200, 3: 200, 4: 200 }, scored: false,
+        },
       });
     };
   </script>
