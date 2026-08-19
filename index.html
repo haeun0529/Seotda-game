@@ -992,6 +992,10 @@
         if (playerCount >= 5) return showLobbyError('이미 5명이 꽉 찬 방이에요');
         if (data.status !== 'waiting') return showLobbyError('이미 시작된 게임이에요');
 
+        const nameTaken = Object.values(data.players || {})
+          .some(p => p.name.trim().toLowerCase() === name.toLowerCase());
+        if (nameTaken) return showLobbyError('이미 이 방에서 쓰이고 있는 닉네임이에요');
+
         await updateDoc(roomRef, {
           [`players.${playerId}`]: { name, isHost: false, joinedAt: Date.now() }
         });
