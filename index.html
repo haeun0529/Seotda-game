@@ -477,8 +477,10 @@
 
         let buttonsHtml;
         if (!isMe && !revealPlayed) {
-          // 아직 다같이 공개되기 전 - 남에게는 냈는지 여부만 보여줌 (뭘 냈는지, 땡인지는 숨김)
-          buttonsHtml = `<div class="status">${play.played.length > 0 ? '카드 냄' : '대기 중...'}</div>`;
+          // 아직 다같이 공개되기 전 - 냈는지 여부조차 안 보여줌
+          // (땡/광땡은 분배되자마자 자동으로 "냄" 상태가 되기 때문에, 그 타이밍 차이로도
+          //  패를 유추할 수 있어서 아예 상태 표시를 안 함)
+          buttonsHtml = `<div class="status">진행 중...</div>`;
         } else if (isDdang) {
           buttonsHtml = `<div class="status">${displayHand[0].isGwang && displayHand[1].isGwang ? '광땡' : '땡'} - 자동으로 2장 다 냄</div>`;
         } else if (isMe) {
