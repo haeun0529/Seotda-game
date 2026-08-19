@@ -170,7 +170,12 @@
     }
 
     // 화면에 그릴 손패: 모르는 카드는 뒷면(hidden) placeholder로 채움
-    function getDisplayHand(p) {
+    // revealPlayed가 false면, 남의 "낸 카드"조차 아직 안 보여줌 (다 같이 공개되기 전 단계)
+    function getDisplayHand(p, revealPlayed) {
+      const isMe = !window.isMultiplayerGame || p.id === window.myGameId;
+      if (!isMe && !revealPlayed) {
+        return [{ hidden: true }, { hidden: true }];
+      }
       const known = getEffectiveHandForLogic(p);
       if (known) return known;
       if (p.played.length === 1) return [p.played[0], { hidden: true }];
@@ -448,15 +453,20 @@
     function renderPlayers(dimIds = new Set(), winnerIds = new Set()) {
       const container = document.getElementById('players');
       container.innerHTML = '';
+
+      // 판정 대상(재대결 중이면 그 둘만, 아니면 전원)이 다 냈어야 "다같이 공개"
+      const revealTargets = replayPair ? replayPair.map(id => currentPlays[id]) : currentPlays;
+      const revealPlayed = revealTargets.length > 0 && revealTargets.every(p => p.played.length > 0);
+
       currentPlays.forEach((play, i) => {
         const div = document.createElement('div');
         div.className = 'player';
         if (winnerIds.has(i)) div.classList.add('winner');
         if (dimIds.has(i)) div.classList.add('duel-loser');
 
-        const displayHand = getDisplayHand(play);
-        const isDdang = window.isMultiplayerGame ? play.played.length === 2 : isForcedPlay(displayHand);
         const isMe = !window.isMultiplayerGame || play.id === window.myGameId;
+        const displayHand = getDisplayHand(play, revealPlayed);
+        const isDdang = play.played.length === 2;
 
         const cardsHtml = displayHand.map(c => {
           const isPlayed = c.hidden ? false : play.played.some(pc => pc.number === c.number && pc.isGwang === c.isGwang);
@@ -466,14 +476,17 @@
         }).join('');
 
         let buttonsHtml;
-        if (isDdang) {
+        if (!isMe && !revealPlayed) {
+          // 아직 다같이 공개되기 전 - 남에게는 냈는지 여부만 보여줌 (뭘 냈는지, 땡인지는 숨김)
+          buttonsHtml = `<div class="status">${play.played.length > 0 ? '카드 냄' : '대기 중...'}</div>`;
+        } else if (isDdang) {
           buttonsHtml = `<div class="status">${displayHand[0].isGwang && displayHand[1].isGwang ? '광땡' : '땡'} - 자동으로 2장 다 냄</div>`;
         } else if (isMe) {
           buttonsHtml = displayHand.map((c, ci) =>
             `<button class="play-btn" onclick="selectCard(${i},${ci})" ${play.played.some(pc => pc.number === c.number && pc.isGwang === c.isGwang) ? 'disabled' : ''}>${c.number}${c.isGwang ? '광' : ''} 내기</button>`
           ).join('');
         } else {
-          buttonsHtml = `<div class="status">${play.played.length > 0 ? '카드 냄' : '대기 중...'}</div>`;
+          buttonsHtml = `<div class="status">카드 냄</div>`;
         }
 
         div.innerHTML = `<h3>${playerLabel(i)}</h3>${cardsHtml}<div>${buttonsHtml}</div>`;
