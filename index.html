@@ -136,6 +136,16 @@
 
   <script src="logic.js"></script>
   <script>
+    // ---- 관리자(디버그) 모드 ----
+    // URL에 ?admin=하니비밀키 를 붙여서 접속했을 때만 디버그용 버튼들이 보임
+    // (이 문자열은 본인만 아는 값으로 자유롭게 바꿔도 됨 - 아래 한 줄만 수정하면 됨)
+    const ADMIN_SECRET = '하니비밀키';
+    window.isAdminMode = new URLSearchParams(location.search).get('admin') === ADMIN_SECRET;
+    if (!window.isAdminMode) {
+      const customBtn = document.getElementById('customBtn');
+      if (customBtn) customBtn.style.display = 'none';
+    }
+
     let currentHands = [];
     let scores = {}; // { gameId: 점수 } - 방 안에서 라운드가 바뀌어도 유지됨 (새 방에서만 초기화)
     let roundScored = false; // 이번 라운드 점수를 이미 반영했는지 (중복 반영 방지)
@@ -695,7 +705,7 @@
             </div>
             ${d.replay && !existingExtra ? `<div style="color:#e05d5d;margin-top:12px;font-weight:bold;">완전 동률! 카드를 1장씩 추가로 뽑아 비교합니다</div>
               <button class="replay-btn" onclick="drawExtraCards(${d.p1.id},${d.p2.id})">카드 1장씩 추가로 뽑기</button>
-              <button class="custom-btn" onclick="toggleExtraCustomForm(${d.p1.id},${d.p2.id})">추가 카드 직접 설정</button>
+              ${window.isAdminMode ? `<button class="custom-btn" onclick="toggleExtraCustomForm(${d.p1.id},${d.p2.id})">추가 카드 직접 설정</button>` : ''}
               <div id="extraCustomForm_${d.p1.id}_${d.p2.id}"></div>` : ''}
             <div id="extraOutcome_${d.p1.id}_${d.p2.id}"></div>
             `;
