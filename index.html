@@ -1125,11 +1125,26 @@
       subscribeMyHand(code);
       startHeartbeat(code); // 대기실~게임 내내 계속 보냄 (게임 중 이탈 감지에도 씀)
       let gameScreenShown = false;
+      let kickHandled = false;
 
       unsubscribeRoom = onSnapshot(roomRef, (snap) => {
         if (!snap.exists()) return;
         const data = snap.data();
         const allPlayers = data.players || {};
+
+        // 내가 players 목록에서 사라졌다면(방장이 강퇴함) 자동으로 로비로 돌아감
+        if (!kickHandled && !allPlayers[playerId]) {
+          kickHandled = true;
+          stopHeartbeat();
+          if (unsubscribeRoom) unsubscribeRoom();
+          if (unsubscribeMyHand) unsubscribeMyHand();
+          currentRoomCode = null;
+          document.getElementById('waitingScreen').style.display = 'none';
+          document.getElementById('gameScreen').style.display = 'none';
+          document.getElementById('lobbyScreen').style.display = 'block';
+          showLobbyError('방장에 의해 강퇴되었어요');
+          return;
+        }
 
         renderWaitingPlayers(allPlayers);
         window.roomMode = data.roomMode || 'custom';
