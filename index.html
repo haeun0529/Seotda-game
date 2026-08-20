@@ -105,6 +105,7 @@
       </select>
     </div>
     <button id="startGameBtn" onclick="handleStartGame()" disabled>게임 시작 (5명 필요)</button>
+    <button onclick="handleLeaveRoom()" style="background:#e05d5d;color:white;margin-top:10px;">나가기</button>
   </div>
 
   <div id="gameScreen">
@@ -169,6 +170,8 @@
     let replayPair = null; // 완전 동률로 재대결 중인 두 플레이어 id [id1, id2]
     let extraCardsUsed = []; // [{ playerId, card }] - 이번 라운드 타이브레이크로 뽑은 카드들
     let roundNumber = 1;
+    let leftPlayerIds = []; // 게임 중 1분 넘게 신호 없어서 자동 퇴장 처리된 플레이어 id들
+    const AFK_MS = 60000; // 게임 중 이만큼 신호 없으면 자동 퇴장
     let dealtAt = null; // 지금 카드 선택 구간이 시작된 시각(ms) - 5명이 같은 기준으로 10초를 셈
     let autoPlayTimer = null;
     let countdownInterval = null;
@@ -248,18 +251,41 @@
     let lastPushedStateJSON = null;
     window.pushGameState = async function () {
       if (!window.isMultiplayerGame || !window.roomRef) return;
-      const json = JSON.stringify({ plays: currentPlays, extraCardsUsed, replayPair, roundNumber, scores, roundScored, dealtAt, currentRoundMode, randomReveal, gwangCountRevealed });
+      const json = JSON.stringify({ plays: currentPlays, extraCardsUsed, replayPair, roundNumber, scores, roundScored, dealtAt, currentRoundMode, randomReveal, gwangCountRevealed, leftPlayerIds });
       if (json === lastPushedStateJSON) return; // 이미 같은 상태면 재전송 안 함 (에코 루프 방지)
       lastPushedStateJSON = json;
       try {
         await window.fsUpdateDoc(window.roomRef, {
           game: {
             plays: currentPlays, extraCardsUsed, replayPair, roundNumber, scores, scored: roundScored, dealtAt,
-            roundMode: currentRoundMode, randomReveal, gwangCountRevealed,
+            roundMode: currentRoundMode, randomReveal, gwangCountRevealed, leftPlayerIds,
           },
         });
       } catch (err) {
         console.error('상태 동기화 실패:', err);
+      }
+    };
+
+    // 게임 중, 1분 넘게 하트비트가 없는 사람을 자동 퇴장 처리 (방장만 실제로 반영해서 충돌 방지)
+    window.checkAfkPlayers = function () {
+      if (!window.isHost || !window.roomPlayers || !window.uidByGameId) return;
+      const now = Date.now();
+      let changed = false;
+      currentPlays.forEach(p => {
+        if (leftPlayerIds.includes(p.id)) return;
+        if (p.played.length > 0) return; // 이번 라운드 이미 냈으면 살아있다고 봄
+        const uid = window.uidByGameId[p.id];
+        const info = uid && window.roomPlayers[uid];
+        const last = info ? (info.lastSeen || 0) : 0;
+        if (last && now - last > AFK_MS) {
+          leftPlayerIds.push(p.id);
+          changed = true;
+        }
+      });
+      if (changed) {
+        renderPlayers();
+        pushGameState();
+        judgeAndRender();
       }
     };
 
@@ -627,8 +653,9 @@
       const container = document.getElementById('players');
       container.innerHTML = '';
 
-      // 판정 대상(재대결 중이면 그 둘만, 아니면 전원)이 다 냈어야 "다같이 공개"
-      const revealTargets = replayPair ? replayPair.map(id => currentPlays[id]) : currentPlays;
+      // 판정 대상(재대결 중이면 그 둘만, 아니면 전원)이 다 냈어야 "다같이 공개" - 퇴장자는 제외
+      const revealTargets = (replayPair ? replayPair.map(id => currentPlays[id]) : currentPlays)
+        .filter(p => !leftPlayerIds.includes(p.id));
       const revealPlayed = revealTargets.length > 0 && revealTargets.every(p => p.played.length > 0);
 
       currentPlays.forEach((play, i) => {
@@ -636,6 +663,13 @@
         div.className = 'player';
         if (winnerIds.has(i)) div.classList.add('winner');
         if (dimIds.has(i)) div.classList.add('duel-loser');
+
+        if (leftPlayerIds.includes(play.id)) {
+          div.classList.add('duel-loser');
+          div.innerHTML = `<h3>${playerLabel(i)}</h3><div class="status">⚠ 퇴장함 (1분 이상 응답 없음)</div>`;
+          container.appendChild(div);
+          return;
+        }
 
         const isMe = !window.isMultiplayerGame || play.id === window.myGameId;
         const displayHand = getDisplayHand(play, revealPlayed);
@@ -725,6 +759,7 @@
       if (!roundScored) {
         initScoresIfNeeded();
         currentPlays.forEach(p => {
+          if (leftPlayerIds.includes(p.id)) return; // 자동 퇴장한 사람은 이번 판 점수 변동 없음
           scores[p.id] = (scores[p.id] ?? 200) + (winnerSet.has(p.id) ? 10 : -10);
         });
         roundScored = true;
@@ -823,9 +858,11 @@
 
     function judgeAndRender(fromButtonClick) {
       // 재대결 모드면 재대결 중인 두 명만 판정 (다른 3명은 이미 아웃된 상태 유지)
-      const targetPlays = replayPair
+      // 자동 퇴장 처리된 사람은 전원 제출 요구 대상에서 제외
+      const targetPlays = (replayPair
         ? replayPair.map(id => currentPlays[id])
-        : currentPlays;
+        : currentPlays
+      ).filter(p => !leftPlayerIds.includes(p.id));
 
       if (targetPlays.length === 0) return; // 아직 아무 상태도 없음 (게임 시작 직후 첫 프레임 등)
 
@@ -845,9 +882,10 @@
 
       // 판정에 필요한 손패가 아직 다 안 모였으면(상대가 공개하는 중) 대기 표시만 하고 끝
       currentPlaysForLogic = buildLogicalPlays(currentPlays) || [];
-      const logicalTargetPlays = replayPair
+      const logicalTargetPlays = (replayPair
         ? replayPair.map(id => currentPlaysForLogic.find(p => p.id === id)).filter(Boolean)
-        : currentPlaysForLogic;
+        : currentPlaysForLogic
+      ).filter(p => !leftPlayerIds.includes(p.id));
 
       if (currentPlaysForLogic.length === 0) {
         renderPlayers();
@@ -892,13 +930,14 @@
       currentRoundMode = gameData.roundMode || 'normal';
       randomReveal = gameData.randomReveal || null;
       gwangCountRevealed = gameData.gwangCountRevealed ?? null;
+      leftPlayerIds = gameData.leftPlayerIds || [];
       document.getElementById('roundLabel').textContent = `라운드 ${roundNumber}`;
       renderScoreboard();
       renderRoundModeBadge();
       renderModeReveal();
       scheduleAutoPlay();
       // 방금 받은 상태를 "이미 전송한 상태"로 표시해서, 재렌더링 중 나가는 push가 같은 내용을 다시 안 쏘게 함
-      lastPushedStateJSON = JSON.stringify({ plays: currentPlays, extraCardsUsed, replayPair, roundNumber, scores, roundScored, dealtAt, currentRoundMode, randomReveal, gwangCountRevealed });
+      lastPushedStateJSON = JSON.stringify({ plays: currentPlays, extraCardsUsed, replayPair, roundNumber, scores, roundScored, dealtAt, currentRoundMode, randomReveal, gwangCountRevealed, leftPlayerIds });
       judgeAndRender();
     };
   </script>
@@ -972,7 +1011,7 @@
           createdAt: serverTimestamp(),
           expiresAt: new Date(Date.now() + 30 * 60 * 1000), // 30분 안에 게임 시작 안 하면 TTL로 자동 삭제
           players: {
-            [playerId]: { name, isHost: true, joinedAt: Date.now() }
+            [playerId]: { name, isHost: true, joinedAt: Date.now(), lastSeen: Date.now() }
           }
         }), 8000, '방 생성');
         isHost = true;
@@ -1007,7 +1046,7 @@
         if (nameTaken) return showLobbyError('이미 이 방에서 쓰이고 있는 닉네임이에요');
 
         await updateDoc(roomRef, {
-          [`players.${playerId}`]: { name, isHost: false, joinedAt: Date.now() }
+          [`players.${playerId}`]: { name, isHost: false, joinedAt: Date.now(), lastSeen: Date.now() }
         });
         isHost = false;
         showLobbyError('');
@@ -1037,6 +1076,44 @@
       await setDoc(doc(db, 'rooms', currentRoomCode, 'hands', uid), { hand });
     };
 
+    const HEARTBEAT_MS = 8000;
+    let heartbeatInterval = null;
+
+    function startHeartbeat(code) {
+      if (heartbeatInterval) clearInterval(heartbeatInterval);
+      const send = () => {
+        if (!currentRoomCode || !playerId) return;
+        updateDoc(doc(db, 'rooms', code), { [`players.${playerId}.lastSeen`]: Date.now() }).catch(() => {});
+      };
+      send();
+      heartbeatInterval = setInterval(send, HEARTBEAT_MS);
+    }
+
+    function stopHeartbeat() {
+      if (heartbeatInterval) clearInterval(heartbeatInterval);
+      heartbeatInterval = null;
+    }
+
+    // 탭을 닫거나 새로고침할 때 최선을 다해 방에서 제거 시도 (100% 보장은 아님 - 하트비트가 진짜 안전망)
+    window.addEventListener('beforeunload', () => {
+      if (currentRoomCode && playerId && !window.isMultiplayerGame) {
+        // 게임 시작 전(대기실)에만 즉시 제거를 시도 - 게임 중엔 놔둬야 다른 사람 라운드가 안 꼬임
+        try { updateDoc(doc(db, 'rooms', currentRoomCode), { [`players.${playerId}`]: deleteField() }); } catch (e) {}
+      }
+    });
+
+    window.handleLeaveRoom = async function () {
+      if (currentRoomCode && playerId) {
+        try { await updateDoc(doc(db, 'rooms', currentRoomCode), { [`players.${playerId}`]: deleteField() }); } catch (e) {}
+      }
+      stopHeartbeat();
+      if (unsubscribeRoom) unsubscribeRoom();
+      if (unsubscribeMyHand) unsubscribeMyHand();
+      currentRoomCode = null;
+      document.getElementById('waitingScreen').style.display = 'none';
+      document.getElementById('lobbyScreen').style.display = 'block';
+    };
+
     function enterWaitingRoom(code) {
       currentRoomCode = code;
       document.getElementById('lobbyScreen').style.display = 'none';
@@ -1046,16 +1123,20 @@
       const roomRef = doc(db, 'rooms', code);
       window.fsUpdateDoc = updateDoc; // logic/게임 스크립트에서 상태 저장할 때 씀
       subscribeMyHand(code);
+      startHeartbeat(code); // 대기실~게임 내내 계속 보냄 (게임 중 이탈 감지에도 씀)
       let gameScreenShown = false;
 
       unsubscribeRoom = onSnapshot(roomRef, (snap) => {
         if (!snap.exists()) return;
         const data = snap.data();
-        renderWaitingPlayers(data.players || {});
+        const allPlayers = data.players || {};
+
+        renderWaitingPlayers(allPlayers);
         window.roomMode = data.roomMode || 'custom';
+        window.roomPlayers = allPlayers; // 게임 화면(이탈 감지 등)에서도 참조
 
         const startBtn = document.getElementById('startGameBtn');
-        const count = Object.keys(data.players || {}).length;
+        const count = Object.keys(allPlayers).length;
         startBtn.disabled = !(isHost && count === 5);
         startBtn.textContent = isHost
           ? (count === 5 ? '게임 시작' : `게임 시작 (${count}/5명)`)
@@ -1082,16 +1163,31 @@
           }
           if (data.playerNames) window.playerNames = data.playerNames;
           if (data.uidByGameId) window.uidByGameId = data.uidByGameId;
+          window.checkAfkPlayers && window.checkAfkPlayers(); // 1분 넘게 신호 없는 사람 자동 퇴장 체크
           if (data.game) window.loadGameState(data.game);
         }
       });
     }
 
+    window.handleKickPlayer = async function (uid) {
+      if (!isHost || !currentRoomCode) return;
+      try {
+        await updateDoc(doc(db, 'rooms', currentRoomCode), { [`players.${uid}`]: deleteField() });
+      } catch (e) {
+        console.error('강퇴 실패:', e);
+      }
+    };
+
     function renderWaitingPlayers(players) {
       const box = document.getElementById('waitingPlayers');
-      box.innerHTML = Object.values(players)
-        .sort((a, b) => a.joinedAt - b.joinedAt)
-        .map(p => `<div class="p-row">${p.name}${p.isHost ? '<span class="host-tag">방장</span>' : ''}</div>`)
+      box.innerHTML = Object.entries(players)
+        .sort((a, b) => a[1].joinedAt - b[1].joinedAt)
+        .map(([uid, p]) => {
+          const kickBtn = (isHost && uid !== playerId)
+            ? `<button onclick="handleKickPlayer('${uid}')" style="float:right;background:#e05d5d;color:white;font-size:11px;padding:3px 8px;border-radius:10px;">강퇴</button>`
+            : '';
+          return `<div class="p-row">${p.name}${p.isHost ? '<span class="host-tag">방장</span>' : ''}${kickBtn}</div>`;
+        })
         .join('');
     }
 
