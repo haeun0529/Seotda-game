@@ -740,6 +740,14 @@
       const winnerSet = new Set(winnerIds);
       const dimIds = new Set(currentPlays.map(p => p.id).filter(id => !winnerSet.has(id)));
 
+      // 승부가 결정됐으니, 각자 자기 몫의 "안 낸 카드"를 공개 (본인 것만 스스로 공개할 수 있음 - 비공개 손패라서)
+      if (window.isMultiplayerGame && window.myGameId !== null) {
+        const mine = currentPlays.find(p => p.id === window.myGameId);
+        if (mine && mine.played.length === 1 && !mine.revealedRemain && myHand.length === 2) {
+          mine.revealedRemain = findRemainCard(myHand, mine.played[0]);
+        }
+      }
+
       if (!roundScored) {
         initScoresIfNeeded();
         currentPlays.forEach(p => {
