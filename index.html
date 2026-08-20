@@ -3,69 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>커스텀 섯다</title>
-<style>
-  body { font-family: sans-serif; background: #1b3a2b; color: white; text-align: center; padding: 40px; }
-  h1 { margin-bottom: 10px; }
-  .sub { color: #a8c9b8; margin-bottom: 30px; font-size: 14px; }
-  button { padding: 10px 20px; font-size: 15px; cursor: pointer; border: none; border-radius: 6px; margin: 4px; }
-  .deal-btn { background: #f2c94c; }
-  .play-btn { background: #4c8bf2; color: white; font-size: 13px; padding: 6px 12px; }
-  .play-btn:disabled { background: #555; cursor: not-allowed; }
-  .judge-btn { background: #e05d5d; color: white; }
-  .players { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin-bottom: 30px; }
-  .player { background: #234a37; padding: 16px; border-radius: 10px; min-width: 140px; }
-  .player.winner { outline: 3px solid #f2c94c; }
-  .player.duel-loser { opacity: 0.35; }
-  .player h3 { margin: 0 0 10px 0; font-size: 14px; color: #f2c94c; }
-  .card { display: inline-block; width: 40px; height: 56px; line-height: 56px; margin: 4px; border-radius: 6px; font-weight: bold; }
-  .card.normal { background: #fff; color: #222; }
-  .card.gwang { background: #f2c94c; color: #7a3e00; }
-  .card.back { background: repeating-linear-gradient(45deg, #1b3a2b, #1b3a2b 4px, #234a37 4px, #234a37 8px); color: #5a7a68; border: 1px solid #3a6650; }
-  .score-chip { display: inline-block; background: #234a37; border-radius: 20px; padding: 6px 14px; margin: 0 4px; font-size: 13px; color: #f2c94c; font-weight: bold; }
-  .card.played { outline: 3px solid #4c8bf2; }
-  .status { font-size: 12px; color: #a8c9b8; margin-top: 6px; }
-  #result { font-size: 18px; margin-top: 20px; color: #f2c94c; font-weight: bold; }
-
-  #duelSpotlight { display: none; background: #3a2412; border: 2px solid #f2c94c; border-radius: 14px; padding: 24px; margin: 0 auto 30px; max-width: 600px; }
-  #duelSpotlight h2 { margin: 0 0 16px; color: #f2c94c; font-size: 16px; letter-spacing: 1px; }
-  .duel-vs { display: flex; align-items: center; justify-content: center; gap: 24px; }
-  .duel-side { text-align: center; }
-  .duel-side .name { font-size: 13px; color: #f2c94c; margin-bottom: 6px; }
-  .duel-side .card { width: 52px; height: 72px; line-height: 72px; font-size: 18px; }
-  .duel-side .combo { font-size: 12px; color: #a8c9b8; margin-top: 6px; }
-  .duel-side.win .combo { color: #f2c94c; font-weight: bold; }
-  .duel-x { font-size: 22px; color: #a8c9b8; }
-  .replay-box { background: #4a1f1f; border: 2px solid #e05d5d; }
-  .replay-btn { background: #e05d5d; color: white; margin-top: 16px; }
-  .custom-btn { background: #7a5cf2; color: white; }
-  #customForm { display: none; background: #234a37; border-radius: 12px; padding: 20px; margin: 0 auto 30px; max-width: 900px; }
-  #customForm h2 { margin: 0 0 16px; font-size: 15px; color: #f2c94c; }
-  .custom-row { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
-  .custom-row .label { width: 70px; font-size: 13px; color: #a8c9b8; text-align: right; }
-  .custom-row select { padding: 4px 6px; border-radius: 4px; border: none; }
-  .custom-row label.gwang-check { font-size: 12px; color: #f2c94c; display: flex; align-items: center; gap: 3px; }
-  #customForm .apply-btn { background: #f2c94c; margin-top: 10px; }
-
-  #lobbyScreen { max-width: 480px; margin: 60px auto; }
-  #lobbyScreen h1 { margin-bottom: 40px; }
-  .lobby-box { background: #234a37; border-radius: 12px; padding: 24px; margin-bottom: 20px; }
-  .lobby-box h2 { font-size: 15px; color: #f2c94c; margin: 0 0 14px; }
-  .lobby-box input { padding: 10px; font-size: 15px; border-radius: 6px; border: none; width: 100%; box-sizing: border-box; margin-bottom: 10px; text-align: center; }
-  .lobby-box button { width: 100%; background: #f2c94c; }
-  .join-box button { background: #4c8bf2; color: white; }
-  #lobbyError { color: #e05d5d; font-size: 13px; margin-top: 8px; min-height: 18px; }
-
-  #waitingScreen { display: none; max-width: 480px; margin: 60px auto; }
-  #waitingScreen .room-code { font-size: 32px; letter-spacing: 6px; color: #f2c94c; font-weight: bold; margin: 10px 0 24px; }
-  #waitingPlayers { text-align: left; background: #234a37; border-radius: 12px; padding: 16px; margin-bottom: 20px; }
-  #waitingPlayers .p-row { padding: 8px 4px; border-bottom: 1px solid #2f5b45; font-size: 14px; }
-  #waitingPlayers .p-row:last-child { border-bottom: none; }
-  #waitingPlayers .p-row .host-tag { color: #f2c94c; font-size: 11px; margin-left: 6px; }
-  #startGameBtn { background: #f2c94c; width: 100%; }
-  #startGameBtn:disabled { background: #555; cursor: not-allowed; }
-
-  #gameScreen { display: none; }
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div id="lobbyScreen">
