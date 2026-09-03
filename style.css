@@ -36,26 +36,23 @@ button {
 #gameTable {
   position: relative;
   width: 100%;
-  max-width: 1100px;
-  aspect-ratio: 1920 / 1080;
   margin: 0 auto 20px;
-  background: url('assets/images/Main_BG.png') no-repeat center / cover;
 }
 
 .player {
-  position: absolute;
+  position: fixed;
   width: 15%;
   min-width: 130px;
   padding: 0;
   background: none;
   box-sizing: border-box;
 }
-/* 오벌 테이블(Main_BG) 위 5자리 좌표 - 상단 좌/우, 중단 좌/우, 하단 중앙 */
-.player-1 { left: 24%; top: 16%; }
-.player-2 { left: 61%; top: 16%; }
+/* 화면(뷰포트) 전체에 깔린 공용 배경(Main_BG) 기준 5자리 좌표 - 상단 좌/우, 중단 좌/우, 하단 중앙 */
+.player-1 { left: 24%; top: 20%; }
+.player-2 { left: 61%; top: 20%; }
 .player-3 { left: 17%; top: 50%; }
 .player-4 { left: 65%; top: 50%; }
-.player-5 { left: 42%; top: 78%; }
+.player-5 { left: 50%; top: 76%; transform: translateX(-50%); }
 
 /* 이름표 - 여기에만 플레이어별 그림을 씀 (카드/버튼 영역은 배경 없이 초록 테이블 위에 그대로) */
 .player h3 {
@@ -64,13 +61,12 @@ button {
   font-size: 14px;
   color: #4a2f10;
   text-shadow: none;
-  background: url('assets/images/Player_01.png') no-repeat center / 100% 100%;
 }
-.player-1 h3 { background-image: url('assets/images/Player_01.png'); }
-.player-2 h3 { background-image: url('assets/images/Player_02.png'); }
-.player-3 h3 { background-image: url('assets/images/Player_03.png'); }
-.player-4 h3 { background-image: url('assets/images/Player_04.png'); }
-.player-5 h3 { background-image: url('assets/images/Player_05.png'); }
+.player-1 h3 { background: url('assets/images/Player_01.png') no-repeat center / 100% 100%; }
+.player-2 h3 { background: url('assets/images/Player_02.png') no-repeat center / 100% 100%; }
+.player-3 h3 { background: url('assets/images/Player_03.png') no-repeat center / 100% 100%; }
+.player-4 h3 { background: url('assets/images/Player_04.png') no-repeat center / 100% 100%; }
+.player-5 h3 { background: url('assets/images/Player_05.png') no-repeat center / 100% 100%; }
 .player.winner.player-1 h3 { background-image: url('assets/images/Player_01_Win.png'); padding: 14px 0; }
 .player.winner.player-2 h3 { background-image: url('assets/images/Player_02_Win.png'); padding: 14px 0; }
 .player.winner.player-3 h3 { background-image: url('assets/images/Player_03_Win.png'); padding: 14px 0; }
