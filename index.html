@@ -85,6 +85,11 @@
       if (customBtn) customBtn.style.display = 'none';
     }
 
+    // ---- 미리보기 모드 ----
+    // URL에 ?preview=1 을 붙이면 로비/대기실 없이 바로 게임 화면으로 점프 + 랜덤 카드 5명 분배
+    // (UI/CSS 확인용. 5탭 안 열어도 혼자서 화면 확인 가능. Firebase/멀티플레이는 전혀 안 씀)
+    window.isPreviewMode = new URLSearchParams(location.search).get('preview') === '1';
+
     let currentHands = [];
     let scores = {}; // { gameId: 점수 } - 방 안에서 라운드가 바뀌어도 유지됨 (새 방에서만 초기화)
     let roundScored = false; // 이번 라운드 점수를 이미 반영했는지 (중복 반영 방지)
@@ -876,6 +881,16 @@
       lastPushedStateJSON = JSON.stringify({ plays: currentPlays, extraCardsUsed, replayPair, roundNumber, scores, roundScored, dealtAt, currentRoundMode, randomReveal, gwangCountRevealed });
       judgeAndRender();
     };
+
+    // 미리보기 모드면 로비를 건너뛰고 바로 게임 화면 + 랜덤 카드로 시작
+    if (window.isPreviewMode) {
+      document.getElementById('lobbyScreen').style.display = 'none';
+      document.getElementById('waitingScreen').style.display = 'none';
+      document.getElementById('gameScreen').style.display = 'block';
+      window.isMultiplayerGame = false;
+      window.myGameId = null;
+      dealAndRender();
+    }
   </script>
   </div>
 

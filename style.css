@@ -125,14 +125,21 @@ button {
 
 /* ---- 라운드 배너 / 모드 배지 ---- */
 #roundModeBadge {
-  display: inline-block;
+  position: fixed;
+  top: 0%;
+  left: 0%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 323px;
+  aspect-ratio: 323 / 186;
   background: url('assets/images/Mod_Main_BG.png') no-repeat center / 100% 100%;
-  color: #4a2f10;
-  font-size: 13px;
+  color: white;
+  padding-top: 20px;
+  font-size: 40px;
   font-weight: bold;
-  padding: 10px 20px;
-  min-width: 140px;
-  margin-bottom: 10px;
+  box-sizing: border-box;
+  z-index: 10;
 }
 #roundLabel {
   display: inline-block;
