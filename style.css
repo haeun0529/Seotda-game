@@ -1,26 +1,84 @@
 /* 커스텀 섯다 - 전체 화면 스타일 (로비/대기실/게임 화면 공용) */
 
-body { font-family: sans-serif; background: #1b3a2b; color: white; text-align: center; padding: 40px; }
+body {
+  font-family: sans-serif;
+  color: white;
+  text-align: center;
+  padding: 40px;
+  background: #1b3a2b;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
 h1 { margin-bottom: 10px; }
 .sub { color: #a8c9b8; margin-bottom: 30px; font-size: 14px; }
-button { padding: 10px 20px; font-size: 15px; cursor: pointer; border: none; border-radius: 6px; margin: 4px; }
-.deal-btn { background: #f2c94c; }
-.play-btn { background: #4c8bf2; color: white; font-size: 13px; padding: 6px 12px; }
-.play-btn:disabled { background: #555; cursor: not-allowed; }
-.judge-btn { background: #e05d5d; color: white; }
-.players { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin-bottom: 30px; }
-.player { background: #234a37; padding: 16px; border-radius: 10px; min-width: 140px; }
-.player.winner { outline: 3px solid #f2c94c; }
+button {
+  padding: 10px 22px;
+  font-size: 15px;
+  cursor: pointer;
+  border: none;
+  margin: 4px;
+  color: #5a3d1a;
+  font-weight: bold;
+  background: url('assets/images/Button_Normal.png') no-repeat center / 100% 100%;
+}
+.deal-btn { color: #5a3d1a; }
+.play-btn { font-size: 13px; padding: 6px 14px; color: #5a3d1a; }
+.play-btn:disabled {
+  background-image: url('assets/images/Button_Selected.png');
+  color: #4a2f10;
+  cursor: not-allowed;
+  opacity: 1;
+}
+.judge-btn { color: white; background-image: none; background-color: #e05d5d; border-radius: 8px; }
+.players { position: static; }
+
+#gameTable {
+  position: relative;
+  width: 100%;
+  max-width: 1100px;
+  aspect-ratio: 1920 / 1080;
+  margin: 0 auto 20px;
+  background: url('assets/images/Main_BG.png') no-repeat center / cover;
+}
+
+.player {
+  position: absolute;
+  width: 15%;
+  min-width: 130px;
+  padding: 20px 16px 16px;
+  border-radius: 10px;
+  background: #234a37;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  box-sizing: border-box;
+}
+/* 오벌 테이블(Main_BG) 위 5자리 좌표 - 상단 좌/우, 중단 좌/우, 하단 중앙 */
+.player-1 { left: 24%; top: 16%; }
+.player-2 { left: 61%; top: 16%; }
+.player-3 { left: 17%; top: 50%; }
+.player-4 { left: 65%; top: 50%; }
+.player-5 { left: 42%; top: 78%; }
+.player-1 { background-image: url('assets/images/Player_01.png'); }
+.player-2 { background-image: url('assets/images/Player_02.png'); }
+.player-3 { background-image: url('assets/images/Player_03.png'); }
+.player-4 { background-image: url('assets/images/Player_04.png'); }
+.player-5 { background-image: url('assets/images/Player_05.png'); }
+.player.winner.player-1 { background-image: url('assets/images/Player_01_Win.png'); }
+.player.winner.player-2 { background-image: url('assets/images/Player_02_Win.png'); }
+.player.winner.player-3 { background-image: url('assets/images/Player_03_Win.png'); }
+.player.winner.player-4 { background-image: url('assets/images/Player_04_Win.png'); }
+.player.winner.player-5 { background-image: url('assets/images/Player_05_Win.png'); }
+.player.winner { outline: none; }
 .player.duel-loser { opacity: 0.35; }
-.player h3 { margin: 0 0 10px 0; font-size: 14px; color: #f2c94c; }
+.player h3 { margin: 0 0 10px 0; font-size: 14px; color: #4a2f10; text-shadow: none; }
 .card { display: inline-block; width: 40px; height: 56px; line-height: 56px; margin: 4px; border-radius: 6px; font-weight: bold; }
 .card.normal { background: #fff; color: #222; }
 .card.gwang { background: #f2c94c; color: #7a3e00; }
 .card.back { background: repeating-linear-gradient(45deg, #1b3a2b, #1b3a2b 4px, #234a37 4px, #234a37 8px); color: #5a7a68; border: 1px solid #3a6650; }
-.score-chip { display: inline-block; background: #234a37; border-radius: 20px; padding: 6px 14px; margin: 0 4px; font-size: 13px; color: #f2c94c; font-weight: bold; }
+.score-chip { display: inline-block; background: #234a37; border-radius: 20px; padding: 6px 14px; margin: 0 4px 10px; font-size: 13px; color: #f2c94c; font-weight: bold; }
 .card.played { outline: 3px solid #4c8bf2; }
-.status { font-size: 12px; color: #a8c9b8; margin-top: 6px; }
-#result { font-size: 18px; margin-top: 20px; color: #f2c94c; font-weight: bold; }
+.status { font-size: 12px; color: #6b4f2a; margin-top: 6px; }
+#result { font-size: 18px; margin-top: 20px; color: #fff2d0; font-weight: bold; text-shadow: 1px 1px 2px #000; }
 
 #duelSpotlight { display: none; background: #3a2412; border: 2px solid #f2c94c; border-radius: 14px; padding: 24px; margin: 0 auto 30px; max-width: 600px; }
 #duelSpotlight h2 { margin: 0 0 16px; color: #f2c94c; font-size: 16px; letter-spacing: 1px; }
@@ -61,3 +119,60 @@ button { padding: 10px 20px; font-size: 15px; cursor: pointer; border: none; bor
 #startGameBtn:disabled { background: #555; cursor: not-allowed; }
 
 #gameScreen { display: none; }
+
+/* ---- 라운드 배너 / 모드 배지 ---- */
+#roundModeBadge {
+  display: inline-block;
+  background: url('assets/images/Mod_Main_BG.png') no-repeat center / 100% 100%;
+  color: #4a2f10;
+  font-size: 13px;
+  font-weight: bold;
+  padding: 10px 20px;
+  min-width: 140px;
+  margin-bottom: 10px;
+}
+#roundLabel {
+  display: inline-block;
+  background: url('assets/images/Round_BG.png') no-repeat center / 100% 100%;
+  color: #4a2f10;
+  font-weight: bold;
+  padding: 6px 40px;
+  margin-bottom: 12px;
+}
+
+/* ---- 랜덤 카드 공개 모드: 5칸 리스트 패널 ---- */
+.mode-list-panel {
+  background: url('assets/images/Mod_List_BG.png') no-repeat center / 100% 100%;
+  width: 220px;
+  margin: 0 auto 20px;
+  padding: 60px 20px 20px;
+  box-sizing: border-box;
+}
+.mode-list-title {
+  position: relative;
+  top: -48px;
+  color: white;
+  font-weight: bold;
+  font-size: 13px;
+}
+.mode-list-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 6px;
+  margin-bottom: 6px;
+}
+.mode-list-name { color: #6b4f2a; font-size: 13px; font-weight: bold; }
+.mode-list-card .card { width: 30px; height: 42px; line-height: 42px; font-size: 12px; margin: 0; }
+
+/* ---- 광 갯수 공개 모드: 단순 안내 패널 ---- */
+.gwang-count-panel {
+  background: #3a2412;
+  border: 2px solid #f2c94c;
+  border-radius: 10px;
+  padding: 14px;
+  margin: 0 auto 16px;
+  max-width: 400px;
+  color: #f2c94c;
+  font-weight: bold;
+}

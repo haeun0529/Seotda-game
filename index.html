@@ -48,12 +48,12 @@
 
   <div id="gameScreen">
   <h1>커스텀 섯다</h1>
-  <div id="roundModeBadge" style="display:inline-block;background:#4c8bf2;color:white;font-size:12px;font-weight:bold;padding:3px 10px;border-radius:12px;margin-bottom:8px;">일반 모드</div>
+  <div id="roundModeBadge">일반 모드</div>
   <div class="sub">가장 큰 숫자를 낸 사람이 이깁니다! 하지만 광은 아닐지도?</div>
-  <div id="roundLabel" style="color:#f2c94c;font-weight:bold;margin-bottom:10px;">라운드 1</div>
-  <div id="scoreboard" style="margin-bottom:16px;"></div>
-  <div id="modeRevealBox" style="display:none;background:#3a2412;border:2px solid #f2c94c;border-radius:10px;padding:14px;margin-bottom:16px;"></div>
-  <div id="autoPlayTimer" style="color:#e05d5d;font-weight:bold;margin-bottom:10px;"></div>
+  <div id="roundLabel">라운드 1</div>
+  <div id="scoreboard"></div>
+  <div id="modeRevealBox"></div>
+  <div id="autoPlayTimer"></div>
   <div id="nextRoundModeBox" style="display:none;text-align:center;margin-bottom:10px;">
     <select id="nextRoundModeSelect" style="padding:8px;border-radius:6px;border:none;">
       <option value="normal">일반 모드</option>
@@ -68,7 +68,9 @@
 
   <div id="customForm"></div>
   <div id="duelSpotlight"></div>
-  <div class="players" id="players"></div>
+  <div id="gameTable">
+    <div class="players" id="players"></div>
+  </div>
   <div id="result"></div>
   <button class="deal-btn" id="nextRoundBtn" style="display:none;margin-top:16px;" onclick="startNextRound()">다음 라운드</button>
 
@@ -168,15 +170,26 @@
     function renderModeReveal() {
       const box = document.getElementById('modeRevealBox');
       if (!box) return;
-      if (currentRoundMode === 'randomReveal' && randomReveal && randomReveal.length) {
+      if (currentRoundMode === 'randomReveal' && randomReveal) {
         box.style.display = 'block';
-        box.innerHTML = `<div style="color:#f2c94c;font-weight:bold;margin-bottom:8px;">🎲 랜덤 모드에 의해 공개되었습니다</div>` +
-          randomReveal.map(r => `<span style="margin-right:14px;">${playerLabel(r.id)}: ${cardHtml(r.card)}</span>`).join('');
+        box.className = 'mode-list-panel';
+        const revealedById = {};
+        randomReveal.forEach(r => { revealedById[r.id] = r.card; });
+        const rows = Array.from({ length: 5 }, (_, i) => {
+          const card = revealedById[i];
+          return `<div class="mode-list-row">
+              <span class="mode-list-name">${playerLabel(i)}</span>
+              <span class="mode-list-card">${card ? cardHtml(card) : '<span class="card back">?</span>'}</span>
+            </div>`;
+        }).join('');
+        box.innerHTML = `<div class="mode-list-title">카드 공개</div>${rows}`;
       } else if (currentRoundMode === 'gwangCount' && gwangCountRevealed !== null) {
         box.style.display = 'block';
-        box.innerHTML = `<div style="color:#f2c94c;font-weight:bold;">✨ 이번 라운드 손패 속 광 카드: ${gwangCountRevealed}장</div>`;
+        box.className = 'gwang-count-panel';
+        box.innerHTML = `✨ 이번 라운드 손패 속 광 카드: ${gwangCountRevealed}장`;
       } else {
         box.style.display = 'none';
+        box.className = '';
         box.innerHTML = '';
       }
     }
@@ -589,7 +602,7 @@
 
       currentPlays.forEach((play, i) => {
         const div = document.createElement('div');
-        div.className = 'player';
+        div.className = `player player-${i + 1}`;
         if (winnerIds.has(i)) div.classList.add('winner');
         if (dimIds.has(i)) div.classList.add('duel-loser');
 
