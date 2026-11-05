@@ -54,24 +54,45 @@ button {
 .player-4 { left: 65%; top: 50%; }
 .player-5 { left: 50%; top: 76%; transform: translateX(-50%); }
 
-/* 이름표 - 여기에만 플레이어별 그림을 씀 (카드/버튼 영역은 배경 없이 초록 테이블 위에 그대로) */
+/* 이름표 - 모든 플레이어 동일한 크기 박스 + 이미지는 비율 유지(contain) */
 .player h3 {
-  margin: 0 0 10px 0;
-  padding: 10px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 2 / 1;          /* 가로:세로 = 2:1 (일반 이미지 비율 약 1.9~2.0에 맞춤) */
+  max-height: 80px;             /* 큰 화면에서 너무 커지지 않게 */
+  margin: 0 auto 10px;
+  padding: 0;
+  box-sizing: border-box;
   font-size: 14px;
   color: #4a2f10;
   text-shadow: none;
+  white-space: nowrap;
+  overflow: hidden;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;     /* 늘리지 않고 박스 안에 비율 유지로 맞춤 */
 }
-.player-1 h3 { background: url('assets/images/Player_01.png') no-repeat center / 100% 100%; }
-.player-2 h3 { background: url('assets/images/Player_02.png') no-repeat center / 100% 100%; }
-.player-3 h3 { background: url('assets/images/Player_03.png') no-repeat center / 100% 100%; }
-.player-4 h3 { background: url('assets/images/Player_04.png') no-repeat center / 100% 100%; }
-.player-5 h3 { background: url('assets/images/Player_05.png') no-repeat center / 100% 100%; }
-.player.winner.player-1 h3 { background-image: url('assets/images/Player_01_Win.png'); padding: 14px 0; }
-.player.winner.player-2 h3 { background-image: url('assets/images/Player_02_Win.png'); padding: 14px 0; }
-.player.winner.player-3 h3 { background-image: url('assets/images/Player_03_Win.png'); padding: 14px 0; }
-.player.winner.player-4 h3 { background-image: url('assets/images/Player_04_Win.png'); padding: 14px 0; }
-.player.winner.player-5 h3 { background-image: url('assets/images/Player_05_Win.png'); padding: 14px 0; }
+.player-1 h3 { background-image: url('assets/images/Player_01.png'); }
+.player-2 h3 { background-image: url('assets/images/Player_02.png'); }
+.player-3 h3 { background-image: url('assets/images/Player_03.png'); }
+.player-4 h3 { background-image: url('assets/images/Player_04.png'); }
+.player-5 h3 { background-image: url('assets/images/Player_05.png'); }
+
+.player-1 h3 { padding-right: 26px; }
+.player-2 h3 { padding-right: 34px; }
+.player-3 h3 { padding-right: 30px; }
+.player-4 h3 { padding-right: 24px; }
+.player-5 h3 { padding-right: 28px; }
+
+/* 우승 이름표 - 박스 크기는 그대로, 그림만 살짝 키워서 강조 (레이아웃이 밀리지 않음) */
+.player.winner h3 { transform: scale(1.1); overflow: visible; }
+.player.winner.player-1 h3 { background-image: url('assets/images/Player_01_Win.png'); }
+.player.winner.player-2 h3 { background-image: url('assets/images/Player_02_Win.png'); }
+.player.winner.player-3 h3 { background-image: url('assets/images/Player_03_Win.png'); }
+.player.winner.player-4 h3 { background-image: url('assets/images/Player_04_Win.png'); }
+.player.winner.player-5 h3 { background-image: url('assets/images/Player_05_Win.png'); }
 .player.winner { outline: none; }
 .player.duel-loser { opacity: 0.45; }
 .card { display: inline-block; width: 40px; height: 56px; line-height: 56px; margin: 4px; border-radius: 6px; font-weight: bold; }
