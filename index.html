@@ -36,507 +36,526 @@
     <div id="helpOverlay" onclick="toggleHelp(false)">
       <div id="helpPanel" onclick="event.stopPropagation()">
         <h2>게임 설명</h2>
-        <p>여기에 설명을 적으세요. (임시)</p>
+
+        <div class="help-page">
+          <h3>일반 모드</h3>
+          <ol>
+            <li>5명이 카드 2장씩 받는다.</li>
+            <li>가장 높은 숫자의 카드를 제출한 사람이 승리.</li>
+            <li>단, 카드를 낸 사람 중에 1, 3, 8광을 제출한 사람이 있다면 결과가 바뀐다.
+              <ol>
+                <li>광이 1명인 경우 → 가장 낮은 숫자를 낸 사람이 승리한다.</li>
+                <li>광이 2명인 경우 → 룰이 변하지 않는다!</li>
+                <li>광이 3명인 경우 → 숫자와 관계없이 광을 내지 않은 2명이 승리한다.</li>
+              </ol>
+            </li>
+            <li>같은 숫자 카드를 두 사람이 낸 경우 → 광 상관없이 두 사람만의 1대1 대결. 단순히 숫자가 높은 사람이 승리하고, 패배한 사람이 패배한다. 남은 3명은 점수 변화 없음.</li>
+            <li>같은 숫자 카드를 두 사람씩 두 파티가 낸 경우 → 각각에서 1대1이 벌어진다.</li>
+            <li>단, 어떤 경우에서든 광이 3개가 나오면 그 3명은 패배하고 나머지가 승리한다.</li>
+          </ol>
+        </div>
+
         <button onclick="toggleHelp(false)">닫기</button>
       </div>
     </div>
+  </div>
 
-    <div id="waitingScreen">
-      <h1>대기실</h1>
-      <div class="room-code" id="roomCodeDisplay"></div>
-      <div id="waitingPlayers"></div>
-      <div id="round1ModeBox" style="display:none;text-align:left;font-size:13px;color:#a8c9b8;margin-bottom:14px;">
-        <div style="margin-bottom:6px;">첫 라운드 모드 선택 (방장)</div>
-        <select id="round1ModeSelect" style="width:100%;padding:8px;border-radius:6px;border:none;">
-          <option value="normal">일반 모드</option>
-          <option value="randomReveal">랜덤 카드 공개 모드</option>
-          <option value="gwangCount">광 갯수 공개 모드</option>
-        </select>
-      </div>
-      <button id="startGameBtn" onclick="handleStartGame()" disabled>게임 시작 (5명 필요)</button>
-      <button onclick="handleLeaveRoom()" style="background:#e05d5d;color:white;margin-top:10px;">나가기</button>
+  <div id="waitingScreen">
+    <h1>대기실</h1>
+    <div class="room-code" id="roomCodeDisplay"></div>
+    <div id="waitingPlayers"></div>
+    <div id="round1ModeBox" style="display:none;text-align:left;font-size:13px;color:#a8c9b8;margin-bottom:14px;">
+      <div style="margin-bottom:6px;">첫 라운드 모드 선택 (방장)</div>
+      <select id="round1ModeSelect" style="width:100%;padding:8px;border-radius:6px;border:none;">
+        <option value="normal">일반 모드</option>
+        <option value="randomReveal">랜덤 카드 공개 모드</option>
+        <option value="gwangCount">광 갯수 공개 모드</option>
+      </select>
+    </div>
+    <button id="startGameBtn" onclick="handleStartGame()" disabled>게임 시작 (5명 필요)</button>
+    <button onclick="handleLeaveRoom()" style="background:#e05d5d;color:white;margin-top:10px;">나가기</button>
+  </div>
+
+  <div id="gameScreen">
+    <div id="roundModeBadge">일반 모드</div>
+    <div id="roundLabel">라운드 1</div>
+    <div id="scoreboard"></div>
+    <div id="modeRevealBox"></div>
+    <div id="autoPlayTimer"></div>
+    <div id="nextRoundModeBox" style="display:none;text-align:center;margin-bottom:10px;">
+      <select id="nextRoundModeSelect" style="padding:8px;border-radius:6px;border:none;">
+        <option value="normal">일반 모드</option>
+        <option value="randomReveal">랜덤 카드 공개 모드</option>
+        <option value="gwangCount">광 갯수 공개 모드</option>
+      </select>
     </div>
 
-    <div id="gameScreen">
-      <div id="roundModeBadge">일반 모드</div>
-      <div id="roundLabel">라운드 1</div>
-      <div id="scoreboard"></div>
-      <div id="modeRevealBox"></div>
-      <div id="autoPlayTimer"></div>
-      <div id="nextRoundModeBox" style="display:none;text-align:center;margin-bottom:10px;">
-        <select id="nextRoundModeSelect" style="padding:8px;border-radius:6px;border:none;">
-          <option value="normal">일반 모드</option>
-          <option value="randomReveal">랜덤 카드 공개 모드</option>
-          <option value="gwangCount">광 갯수 공개 모드</option>
-        </select>
-      </div>
+    <button class="deal-btn" id="dealBtn" onclick="dealAndRender()">카드 분배</button>
+    <button class="custom-btn" id="customBtn" onclick="toggleCustomForm()">커스텀 카드 설정</button>
+    <button class="judge-btn" onclick="judgeAndRender(true)">결과 확인</button>
 
-      <button class="deal-btn" id="dealBtn" onclick="dealAndRender()">카드 분배</button>
-      <button class="custom-btn" id="customBtn" onclick="toggleCustomForm()">커스텀 카드 설정</button>
-      <button class="judge-btn" onclick="judgeAndRender(true)">결과 확인</button>
-
-      <div id="customForm"></div>
-      <div id="duelSpotlight"></div>
-      <div id="gameTable">
-        <div class="players" id="players"></div>
-      </div>
-      <div id="result"></div>
-      <button class="deal-btn" id="nextRoundBtn" style="display:none;margin-top:16px;" onclick="startNextRound()">다음
-        라운드</button>
+    <div id="customForm"></div>
+    <div id="duelSpotlight"></div>
+    <div id="gameTable">
+      <div class="players" id="players"></div>
+    </div>
+    <div id="result"></div>
+    <button class="deal-btn" id="nextRoundBtn" style="display:none;margin-top:16px;" onclick="startNextRound()">다음
+      라운드</button>
 
 
-      <script src="logic.js"></script>
-      <script>
-        // ---- 관리자(디버그) 모드 ----
-        // URL에 ?admin=하니비밀키 를 붙여서 접속했을 때만 디버그용 버튼들이 보임
-        // (이 문자열은 본인만 아는 값으로 자유롭게 바꿔도 됨 - 아래 한 줄만 수정하면 됨)
-        const ADMIN_SECRET = '하니비밀키';
-        window.isAdminMode = new URLSearchParams(location.search).get('admin') === ADMIN_SECRET;
-        if (!window.isAdminMode) {
-          const customBtn = document.getElementById('customBtn');
-          if (customBtn) customBtn.style.display = 'none';
+    <script src="logic.js"></script>
+    <script>
+      // ---- 관리자(디버그) 모드 ----
+      // URL에 ?admin=하니비밀키 를 붙여서 접속했을 때만 디버그용 버튼들이 보임
+      // (이 문자열은 본인만 아는 값으로 자유롭게 바꿔도 됨 - 아래 한 줄만 수정하면 됨)
+      const ADMIN_SECRET = '하니비밀키';
+      window.isAdminMode = new URLSearchParams(location.search).get('admin') === ADMIN_SECRET;
+      if (!window.isAdminMode) {
+        const customBtn = document.getElementById('customBtn');
+        if (customBtn) customBtn.style.display = 'none';
+      }
+
+      // ---- 미리보기 모드 ----
+      // URL에 ?preview=1 을 붙이면 로비/대기실 없이 바로 게임 화면으로 점프 + 랜덤 카드 5명 분배
+      // (UI/CSS 확인용. 5탭 안 열어도 혼자서 화면 확인 가능. Firebase/멀티플레이는 전혀 안 씀)
+      window.isPreviewMode = new URLSearchParams(location.search).get('preview') === '1';
+
+      let currentHands = [];
+      let scores = {}; // { gameId: 점수 } - 방 안에서 라운드가 바뀌어도 유지됨 (새 방에서만 초기화)
+      let roundScored = false; // 이번 라운드 점수를 이미 반영했는지 (중복 반영 방지)
+
+      function initScoresIfNeeded() {
+        for (let i = 0; i < 5; i++) {
+          if (scores[i] === undefined) scores[i] = 200;
         }
+      }
 
-        // ---- 미리보기 모드 ----
-        // URL에 ?preview=1 을 붙이면 로비/대기실 없이 바로 게임 화면으로 점프 + 랜덤 카드 5명 분배
-        // (UI/CSS 확인용. 5탭 안 열어도 혼자서 화면 확인 가능. Firebase/멀티플레이는 전혀 안 씀)
-        window.isPreviewMode = new URLSearchParams(location.search).get('preview') === '1';
+      function renderScoreboard() {
+        const box = document.getElementById('scoreboard');
+        if (!box) return;
+        box.innerHTML = Array.from({ length: 5 }, (_, i) =>
+          `<span class="score-chip">${playerLabel(i)}: ${scores[i] ?? 200}점</span>`
+        ).join('');
+      }
+      let currentPlays = []; // { id, uid, played, revealedRemain? } - 멀티플레이에선 hand가 없음(비공개라서)
+      let currentPlaysForLogic = []; // 판정용 - 결투 당사자는 hand를 채워서 씀
+      let myHand = []; // 내 손패 (비공개 문서에서만 읽어옴, 절대 공개 데이터에 안 실림)
+      let replayPair = null; // 완전 동률로 재대결 중인 두 플레이어 id [id1, id2]
+      let extraCardsUsed = []; // [{ playerId, card }] - 이번 라운드 타이브레이크로 뽑은 카드들
+      let roundNumber = 1;
+      const AFK_MS = 60000; // 게임 중 이만큼 신호 없으면 AFK로 감지 (감지되면 게임 전체가 중단되고 대기실로 복귀)
+      let dealtAt = null; // 지금 카드 선택 구간이 시작된 시각(ms) - 5명이 같은 기준으로 10초를 셈
+      let autoPlayTimer = null;
+      let countdownInterval = null;
+      const AUTO_PLAY_MS = 10000;
 
-        let currentHands = [];
-        let scores = {}; // { gameId: 점수 } - 방 안에서 라운드가 바뀌어도 유지됨 (새 방에서만 초기화)
-        let roundScored = false; // 이번 라운드 점수를 이미 반영했는지 (중복 반영 방지)
+      // ---- 라운드 모드 (일반 / 랜덤 카드 공개 / 광 갯수 공개) ----
+      let currentRoundMode = 'normal';
+      let randomReveal = null; // [{ id, card }] - 랜덤 카드 공개 모드일 때
+      let gwangCountRevealed = null; // 숫자 - 광 갯수 공개 모드일 때
 
-        function initScoresIfNeeded() {
-          for (let i = 0; i < 5; i++) {
-            if (scores[i] === undefined) scores[i] = 200;
+      window.weightedPickMode = function () {
+        const r = Math.random();
+        if (r < 0.5) return 'normal';
+        if (r < 0.75) return 'randomReveal';
+        return 'gwangCount';
+      };
+
+      // 모드별 공개 데이터를 계산 (딜 시점에만 호출 - 5명 손패를 다 아는 쪽에서만 실행 가능)
+      window.computeModeReveal = function (mode, hands) {
+        if (mode === 'randomReveal') {
+          const count = 1 + Math.floor(Math.random() * 5); // 1~5명
+          const ids = [0, 1, 2, 3, 4];
+          for (let i = ids.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [ids[i], ids[j]] = [ids[j], ids[i]];
           }
+          const chosenIds = ids.slice(0, count);
+          const reveal = chosenIds.map(id => ({
+            id,
+            card: hands[id][Math.random() < 0.5 ? 0 : 1],
+          }));
+          return { roundMode: 'randomReveal', randomReveal: reveal, gwangCountRevealed: null };
         }
-
-        function renderScoreboard() {
-          const box = document.getElementById('scoreboard');
-          if (!box) return;
-          box.innerHTML = Array.from({ length: 5 }, (_, i) =>
-            `<span class="score-chip">${playerLabel(i)}: ${scores[i] ?? 200}점</span>`
-          ).join('');
+        if (mode === 'gwangCount') {
+          let count = 0;
+          hands.forEach(h => { count += h.filter(c => c.isGwang).length; });
+          return { roundMode: 'gwangCount', randomReveal: null, gwangCountRevealed: count };
         }
-        let currentPlays = []; // { id, uid, played, revealedRemain? } - 멀티플레이에선 hand가 없음(비공개라서)
-        let currentPlaysForLogic = []; // 판정용 - 결투 당사자는 hand를 채워서 씀
-        let myHand = []; // 내 손패 (비공개 문서에서만 읽어옴, 절대 공개 데이터에 안 실림)
-        let replayPair = null; // 완전 동률로 재대결 중인 두 플레이어 id [id1, id2]
-        let extraCardsUsed = []; // [{ playerId, card }] - 이번 라운드 타이브레이크로 뽑은 카드들
-        let roundNumber = 1;
-        const AFK_MS = 60000; // 게임 중 이만큼 신호 없으면 AFK로 감지 (감지되면 게임 전체가 중단되고 대기실로 복귀)
-        let dealtAt = null; // 지금 카드 선택 구간이 시작된 시각(ms) - 5명이 같은 기준으로 10초를 셈
-        let autoPlayTimer = null;
-        let countdownInterval = null;
-        const AUTO_PLAY_MS = 10000;
+        return { roundMode: 'normal', randomReveal: null, gwangCountRevealed: null };
+      };
 
-        // ---- 라운드 모드 (일반 / 랜덤 카드 공개 / 광 갯수 공개) ----
-        let currentRoundMode = 'normal';
-        let randomReveal = null; // [{ id, card }] - 랜덤 카드 공개 모드일 때
-        let gwangCountRevealed = null; // 숫자 - 광 갯수 공개 모드일 때
-
-        window.weightedPickMode = function () {
-          const r = Math.random();
-          if (r < 0.5) return 'normal';
-          if (r < 0.75) return 'randomReveal';
-          return 'gwangCount';
-        };
-
-        // 모드별 공개 데이터를 계산 (딜 시점에만 호출 - 5명 손패를 다 아는 쪽에서만 실행 가능)
-        window.computeModeReveal = function (mode, hands) {
-          if (mode === 'randomReveal') {
-            const count = 1 + Math.floor(Math.random() * 5); // 1~5명
-            const ids = [0, 1, 2, 3, 4];
-            for (let i = ids.length - 1; i > 0; i--) {
-              const j = Math.floor(Math.random() * (i + 1));
-              [ids[i], ids[j]] = [ids[j], ids[i]];
-            }
-            const chosenIds = ids.slice(0, count);
-            const reveal = chosenIds.map(id => ({
-              id,
-              card: hands[id][Math.random() < 0.5 ? 0 : 1],
-            }));
-            return { roundMode: 'randomReveal', randomReveal: reveal, gwangCountRevealed: null };
-          }
-          if (mode === 'gwangCount') {
-            let count = 0;
-            hands.forEach(h => { count += h.filter(c => c.isGwang).length; });
-            return { roundMode: 'gwangCount', randomReveal: null, gwangCountRevealed: count };
-          }
-          return { roundMode: 'normal', randomReveal: null, gwangCountRevealed: null };
-        };
-
-        // 지금 이 방/라운드에서 쓸 모드를 결정 (커스텀 모드면 선택창 값, 랜덤 모드면 확률 추첨)
-        function getChosenRoundMode() {
-          // 미리보기(혼자 확인용)에서는 주소창 ?mode= 값으로 모드를 고정
-          if (!window.isMultiplayerGame) {
-            const m = new URLSearchParams(location.search).get('mode');
-            return ['randomReveal', 'gwangCount'].includes(m) ? m : 'normal';
-          }
-          if (window.roomMode === 'random') return window.weightedPickMode();
-          const sel = document.getElementById('nextRoundModeSelect');
-          return sel ? sel.value : 'normal';
+      // 지금 이 방/라운드에서 쓸 모드를 결정 (커스텀 모드면 선택창 값, 랜덤 모드면 확률 추첨)
+      function getChosenRoundMode() {
+        // 미리보기(혼자 확인용)에서는 주소창 ?mode= 값으로 모드를 고정
+        if (!window.isMultiplayerGame) {
+          const m = new URLSearchParams(location.search).get('mode');
+          return ['randomReveal', 'gwangCount'].includes(m) ? m : 'normal';
         }
+        if (window.roomMode === 'random') return window.weightedPickMode();
+        const sel = document.getElementById('nextRoundModeSelect');
+        return sel ? sel.value : 'normal';
+      }
 
-        function renderRoundModeBadge() {
-          const badge = document.getElementById('roundModeBadge');
-          if (!badge) return;
-          const labels = { normal: '일반 모드', randomReveal: '랜덤 카드 공개 모드', gwangCount: '광 갯수 공개 모드' };
-          badge.textContent = labels[currentRoundMode] || '일반 모드';
-        }
+      function renderRoundModeBadge() {
+        const badge = document.getElementById('roundModeBadge');
+        if (!badge) return;
+        const labels = { normal: '일반 모드', randomReveal: '랜덤 카드 공개 모드', gwangCount: '광 갯수 공개 모드' };
+        badge.textContent = labels[currentRoundMode] || '일반 모드';
+      }
 
-        function renderModeReveal() {
-          const box = document.getElementById('modeRevealBox');
-          if (!box) return;
-          if (currentRoundMode === 'randomReveal' && randomReveal) {
-            box.style.display = 'block';
-            box.className = 'mode-list-panel';
-            const revealedById = {};
-            randomReveal.forEach(r => { revealedById[r.id] = r.card; });
-            const rows = Array.from({ length: 5 }, (_, i) => {
-              const card = revealedById[i];
-              return `<div class="mode-list-row">
+      function renderModeReveal() {
+        const box = document.getElementById('modeRevealBox');
+        if (!box) return;
+        if (currentRoundMode === 'randomReveal' && randomReveal) {
+          box.style.display = 'block';
+          box.className = 'mode-list-panel';
+          const revealedById = {};
+          randomReveal.forEach(r => { revealedById[r.id] = r.card; });
+          const rows = Array.from({ length: 5 }, (_, i) => {
+            const card = revealedById[i];
+            return `<div class="mode-list-row">
               <span class="mode-list-name">${playerLabel(i)}</span>
               <span class="mode-list-card">${card ? cardHtml(card) : '<span class="card back">?</span>'}</span>
             </div>`;
-            }).join('');
-            box.innerHTML = `<div class="mode-list-title">카드 공개</div>${rows}`;
-          } else if (currentRoundMode === 'gwangCount' && gwangCountRevealed !== null) {
-            box.style.display = 'block';
-            box.className = 'gwang-count-panel';
-            box.innerHTML = `✨ 이번 라운드 손패 속 광 카드: ${gwangCountRevealed}장`;
-          } else {
-            box.style.display = 'none';
-            box.className = '';
-            box.innerHTML = '';
-          }
+          }).join('');
+          box.innerHTML = `<div class="mode-list-title">카드 공개</div>${rows}`;
+        } else if (currentRoundMode === 'gwangCount' && gwangCountRevealed !== null) {
+          box.style.display = 'block';
+          box.className = 'gwang-count-panel';
+          box.innerHTML = `✨ 이번 라운드 손패 속 광 카드: ${gwangCountRevealed}장`;
+        } else {
+          box.style.display = 'none';
+          box.className = '';
+          box.innerHTML = '';
         }
+      }
 
-        // ---- 멀티플레이 동기화 (roomRef/myGameId/isMultiplayerGame은 로비 스크립트에서 설정) ----
-        window.isMultiplayerGame = false;
-        window.myGameId = null;
-        window.uidByGameId = [];
-        let lastPushedStateJSON = null;
-        window.pushGameState = async function () {
-          if (!window.isMultiplayerGame || !window.roomRef) return;
-          const json = JSON.stringify({ plays: currentPlays, extraCardsUsed, replayPair, roundNumber, scores, roundScored, dealtAt, currentRoundMode, randomReveal, gwangCountRevealed });
-          if (json === lastPushedStateJSON) return; // 이미 같은 상태면 재전송 안 함 (에코 루프 방지)
-          lastPushedStateJSON = json;
-          try {
-            await window.fsUpdateDoc(window.roomRef, {
-              game: {
-                plays: currentPlays, extraCardsUsed, replayPair, roundNumber, scores, scored: roundScored, dealtAt,
-                roundMode: currentRoundMode, randomReveal, gwangCountRevealed,
-              },
-            });
-          } catch (err) {
-            console.error('상태 동기화 실패:', err);
-          }
-        };
-
-        // 게임 중, 1분 넘게 하트비트가 없는 사람을 감지 (접속해 있는 누구나 이 검사를 돌림)
-        // 감지되면 로비 스크립트의 handlePlayerDeparture로 넘겨서 방장 재배정+대기실 복귀까지 한 번에 처리
-        window.checkAfkPlayers = function () {
-          if (!window.isMultiplayerGame || !window.roomPlayers || !window.uidByGameId) return;
-          const now = Date.now();
-          currentPlays.forEach(p => {
-            if (p.played.length > 0) return; // 이번 라운드 이미 냈으면 살아있다고 봄
-            const uid = window.uidByGameId[p.id];
-            const info = uid && window.roomPlayers[uid];
-            const last = info ? (info.lastSeen || 0) : 0;
-            if (last && now - last > AFK_MS && window.handlePlayerDeparture) {
-              window.handlePlayerDeparture(uid);
-            }
+      // ---- 멀티플레이 동기화 (roomRef/myGameId/isMultiplayerGame은 로비 스크립트에서 설정) ----
+      window.isMultiplayerGame = false;
+      window.myGameId = null;
+      window.uidByGameId = [];
+      let lastPushedStateJSON = null;
+      window.pushGameState = async function () {
+        if (!window.isMultiplayerGame || !window.roomRef) return;
+        const json = JSON.stringify({ plays: currentPlays, extraCardsUsed, replayPair, roundNumber, scores, roundScored, dealtAt, currentRoundMode, randomReveal, gwangCountRevealed });
+        if (json === lastPushedStateJSON) return; // 이미 같은 상태면 재전송 안 함 (에코 루프 방지)
+        lastPushedStateJSON = json;
+        try {
+          await window.fsUpdateDoc(window.roomRef, {
+            game: {
+              plays: currentPlays, extraCardsUsed, replayPair, roundNumber, scores, scored: roundScored, dealtAt,
+              roundMode: currentRoundMode, randomReveal, gwangCountRevealed,
+            },
           });
-        };
-
-        // 내가 아직 카드를 안 냈으면, 남은 시간이 지나는 순간 내 손패에서 무작위로 1장 자동 제출
-        // (땡/광땡은 이미 딜 시점에 자동으로 2장 다 냈으니 여기서 할 일이 없음 - 아래에서 자연히 스킵됨)
-        function scheduleAutoPlay() {
-          if (autoPlayTimer) clearTimeout(autoPlayTimer);
-          if (countdownInterval) clearInterval(countdownInterval);
-          document.getElementById('autoPlayTimer').textContent = '';
-
-          if (!window.isMultiplayerGame || window.myGameId === null || dealtAt === null) return;
-          if (replayPair && !replayPair.includes(window.myGameId)) return; // 재대결 중엔 당사자만 타이머 적용
-          const myPlay = currentPlays[window.myGameId];
-          if (!myPlay || myPlay.played.length > 0) return; // 이미 냈으면(강제 포함) 스킵
-
-          const tick = () => {
-            const remainingMs = AUTO_PLAY_MS - (Date.now() - dealtAt);
-            const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000));
-            const el = document.getElementById('autoPlayTimer');
-            if (el) el.textContent = remainingSec > 0 ? `⏱ ${remainingSec}초 안에 카드를 골라주세요 (안 고르면 무작위로 제출)` : '';
-          };
-          tick();
-          countdownInterval = setInterval(tick, 1000);
-
-          const remaining = Math.max(0, AUTO_PLAY_MS - (Date.now() - dealtAt));
-          autoPlayTimer = setTimeout(() => {
-            if (countdownInterval) clearInterval(countdownInterval);
-            const el = document.getElementById('autoPlayTimer');
-            if (el) el.textContent = '';
-            const p = currentPlays[window.myGameId];
-            if (!p || p.played.length > 0) return; // 그 사이 이미 냈으면 스킵
-            const idx = Math.random() < 0.5 ? 0 : 1;
-            selectCard(window.myGameId, idx);
-          }, remaining);
+        } catch (err) {
+          console.error('상태 동기화 실패:', err);
         }
+      };
 
-        // 로비에서 정한 실제 닉네임이 있으면 그걸 쓰고, 없으면 "플레이어 N"으로 대체
-        function playerLabel(id) {
-          const name = window.playerNames && window.playerNames[id];
-          return name || `플레이어 ${id + 1}`;
-        }
-
-        // 이 플레이어의 "실제로 알 수 있는" 손패를 반환. 본인이거나, 땡/광땡으로 이미 전체 공개됐거나,
-        // 결투로 상대가 남은 카드를 공개한 경우에만 알 수 있음. 그 외엔 null (모름)
-        function getEffectiveHandForLogic(p) {
-          if (!window.isMultiplayerGame) return p.hand || null; // 로컬 테스트 모드는 항상 다 앎
-          if (p.id === window.myGameId) return myHand.length ? myHand : null;
-          if (p.played.length === 2) return p.played; // 땡/광땡은 처음부터 전체 공개
-          if (p.revealedRemain) return [p.played[0], p.revealedRemain];
-          return null;
-        }
-
-        // 화면에 그릴 손패: 모르는 카드는 뒷면(hidden) placeholder로 채움
-        // revealPlayed가 false면, 남의 "낸 카드"조차 아직 안 보여줌 (다 같이 공개되기 전 단계)
-        function getDisplayHand(p, revealPlayed) {
-          const isMe = !window.isMultiplayerGame || p.id === window.myGameId;
-          if (!isMe && !revealPlayed) {
-            return [{ hidden: true }, { hidden: true }];
+      // 게임 중, 1분 넘게 하트비트가 없는 사람을 감지 (접속해 있는 누구나 이 검사를 돌림)
+      // 감지되면 로비 스크립트의 handlePlayerDeparture로 넘겨서 방장 재배정+대기실 복귀까지 한 번에 처리
+      window.checkAfkPlayers = function () {
+        if (!window.isMultiplayerGame || !window.roomPlayers || !window.uidByGameId) return;
+        const now = Date.now();
+        currentPlays.forEach(p => {
+          if (p.played.length > 0) return; // 이번 라운드 이미 냈으면 살아있다고 봄
+          const uid = window.uidByGameId[p.id];
+          const info = uid && window.roomPlayers[uid];
+          const last = info ? (info.lastSeen || 0) : 0;
+          if (last && now - last > AFK_MS && window.handlePlayerDeparture) {
+            window.handlePlayerDeparture(uid);
           }
-          const known = getEffectiveHandForLogic(p);
-          if (known) return known;
-          if (p.played.length === 1) return [p.played[0], { hidden: true }];
+        });
+      };
+
+      // 내가 아직 카드를 안 냈으면, 남은 시간이 지나는 순간 내 손패에서 무작위로 1장 자동 제출
+      // (땡/광땡은 이미 딜 시점에 자동으로 2장 다 냈으니 여기서 할 일이 없음 - 아래에서 자연히 스킵됨)
+      function scheduleAutoPlay() {
+        if (autoPlayTimer) clearTimeout(autoPlayTimer);
+        if (countdownInterval) clearInterval(countdownInterval);
+        document.getElementById('autoPlayTimer').textContent = '';
+
+        if (!window.isMultiplayerGame || window.myGameId === null || dealtAt === null) return;
+        if (replayPair && !replayPair.includes(window.myGameId)) return; // 재대결 중엔 당사자만 타이머 적용
+        const myPlay = currentPlays[window.myGameId];
+        if (!myPlay || myPlay.played.length > 0) return; // 이미 냈으면(강제 포함) 스킵
+
+        const tick = () => {
+          const remainingMs = AUTO_PLAY_MS - (Date.now() - dealtAt);
+          const remainingSec = Math.max(0, Math.ceil(remainingMs / 1000));
+          const el = document.getElementById('autoPlayTimer');
+          if (el) el.textContent = remainingSec > 0 ? `⏱ ${remainingSec}초 안에 카드를 골라주세요 (안 고르면 무작위로 제출)` : '';
+        };
+        tick();
+        countdownInterval = setInterval(tick, 1000);
+
+        const remaining = Math.max(0, AUTO_PLAY_MS - (Date.now() - dealtAt));
+        autoPlayTimer = setTimeout(() => {
+          if (countdownInterval) clearInterval(countdownInterval);
+          const el = document.getElementById('autoPlayTimer');
+          if (el) el.textContent = '';
+          const p = currentPlays[window.myGameId];
+          if (!p || p.played.length > 0) return; // 그 사이 이미 냈으면 스킵
+          const idx = Math.random() < 0.5 ? 0 : 1;
+          selectCard(window.myGameId, idx);
+        }, remaining);
+      }
+
+      // 로비에서 정한 실제 닉네임이 있으면 그걸 쓰고, 없으면 "플레이어 N"으로 대체
+      function playerLabel(id) {
+        const name = window.playerNames && window.playerNames[id];
+        return name || `플레이어 ${id + 1}`;
+      }
+
+      // 이 플레이어의 "실제로 알 수 있는" 손패를 반환. 본인이거나, 땡/광땡으로 이미 전체 공개됐거나,
+      // 결투로 상대가 남은 카드를 공개한 경우에만 알 수 있음. 그 외엔 null (모름)
+      function getEffectiveHandForLogic(p) {
+        if (!window.isMultiplayerGame) return p.hand || null; // 로컬 테스트 모드는 항상 다 앎
+        if (p.id === window.myGameId) return myHand.length ? myHand : null;
+        if (p.played.length === 2) return p.played; // 땡/광땡은 처음부터 전체 공개
+        if (p.revealedRemain) return [p.played[0], p.revealedRemain];
+        return null;
+      }
+
+      // 화면에 그릴 손패: 모르는 카드는 뒷면(hidden) placeholder로 채움
+      // revealPlayed가 false면, 남의 "낸 카드"조차 아직 안 보여줌 (다 같이 공개되기 전 단계)
+      function getDisplayHand(p, revealPlayed) {
+        const isMe = !window.isMultiplayerGame || p.id === window.myGameId;
+        if (!isMe && !revealPlayed) {
           return [{ hidden: true }, { hidden: true }];
         }
+        const known = getEffectiveHandForLogic(p);
+        if (known) return known;
+        if (p.played.length === 1) return [p.played[0], { hidden: true }];
+        return [{ hidden: true }, { hidden: true }];
+      }
 
-        // 결투(같은 숫자를 낸 두 명) 판정에 필요한 손패가 다 모였는지 확인하고,
-        // 다 모였으면 판정용 배열을 만들어 반환. 아직 상대가 카드를 공개 안 했으면 null
-        function buildLogicalPlays(plays) {
-          const singlePlays = plays.filter(p => p.played.length === 1);
-          const numberGroups = {};
-          singlePlays.forEach(p => { (numberGroups[p.played[0].number] ??= []).push(p); });
-          const duelPairs = Object.values(numberGroups).filter(g => g.length === 2);
+      // 결투(같은 숫자를 낸 두 명) 판정에 필요한 손패가 다 모였는지 확인하고,
+      // 다 모였으면 판정용 배열을 만들어 반환. 아직 상대가 카드를 공개 안 했으면 null
+      function buildLogicalPlays(plays) {
+        const singlePlays = plays.filter(p => p.played.length === 1);
+        const numberGroups = {};
+        singlePlays.forEach(p => { (numberGroups[p.played[0].number] ??= []).push(p); });
+        const duelPairs = Object.values(numberGroups).filter(g => g.length === 2);
 
-          for (const [a, b] of duelPairs) {
-            if (!getEffectiveHandForLogic(a) || !getEffectiveHandForLogic(b)) return null; // 아직 대기
+        for (const [a, b] of duelPairs) {
+          if (!getEffectiveHandForLogic(a) || !getEffectiveHandForLogic(b)) return null; // 아직 대기
+        }
+        return plays.map(p => ({ ...p, hand: getEffectiveHandForLogic(p) || [p.played[0] || { number: 0, isGwang: false }, p.played[0] || { number: 0, isGwang: false }] }));
+      }
+
+      // 내가 결투 당사자인데 아직 내 남은 카드를 공개 안 했다면, 지금 공개(비공개 손패 → 공개 데이터로 이동)
+      function revealMyRemainIfNeeded() {
+        if (!window.isMultiplayerGame || window.myGameId === null || !myHand.length) return false;
+        const singlePlays = currentPlays.filter(p => p.played.length === 1);
+        const mine = singlePlays.find(p => p.id === window.myGameId);
+        if (!mine || mine.revealedRemain) return false;
+        const opponent = singlePlays.find(p => p.id !== window.myGameId && p.played[0].number === mine.played[0].number);
+        if (!opponent) return false;
+        mine.revealedRemain = findRemainCard(myHand, mine.played[0]);
+        return true;
+      }
+
+      function getRemainingDeck() {
+        const deck = createDeck();
+        const removeMatch = (c) => {
+          const idx = deck.findIndex(d => d.number === c.number && d.isGwang === c.isGwang);
+          if (idx !== -1) deck.splice(idx, 1);
+        };
+        // 아는 만큼만 제외함 (숨겨진 남의 손패는 알 수 없어 완벽하진 않지만, 결투 당사자는 이 시점에 이미 공개된 상태)
+        currentPlays.forEach(p => (getEffectiveHandForLogic(p) || p.played).forEach(removeMatch));
+        extraCardsUsed.forEach(e => removeMatch(e.card)); // 이미 타이브레이크로 뽑힌 카드도 제외
+        return deck;
+      }
+
+      function drawSingleCard() {
+        const remaining = shuffle(getRemainingDeck());
+        return remaining[0];
+      }
+
+      // 필드에 나온 광 카드 총 장수: 각자 낸 카드 + 결투로 공개된 남은 카드 + 타이브레이크로 뽑은 카드까지 전부 포함
+      function totalFieldGwangCount() {
+        let count = 0;
+        currentPlays.forEach(p => { count += p.played.filter(c => c.isGwang).length; });
+        count += extraCardsUsed.filter(e => e.card.isGwang).length;
+        // 결투가 있었다면, 결투 중 공개된 남은 카드(remain)도 필드에 드러난 카드로 카운트
+        findDuels(currentPlaysForLogic).forEach(d => {
+          if (d.remain1.isGwang) count++;
+          if (d.remain2.isGwang) count++;
+        });
+        return count;
+      }
+
+      // 각 플레이어가 지금까지(낸 카드+결투 남은 카드+타이브레이크 카드) 가진 광 카드 수
+      function gwangHoldersCount() {
+        const duels = findDuels(currentPlaysForLogic);
+        return currentPlays.map(p => {
+          let count = p.played.filter(c => c.isGwang).length;
+          const duel = duels.find(d => d.p1.id === p.id || d.p2.id === p.id);
+          if (duel) {
+            const remain = duel.p1.id === p.id ? duel.remain1 : duel.remain2;
+            if (remain.isGwang) count++;
           }
-          return plays.map(p => ({ ...p, hand: getEffectiveHandForLogic(p) || [p.played[0] || { number: 0, isGwang: false }, p.played[0] || { number: 0, isGwang: false }] }));
+          count += extraCardsUsed.filter(e => e.playerId === p.id && e.card.isGwang).length;
+          return { player: p, count };
+        }).filter(h => h.count > 0);
+      }
+
+      // 광을 하나도 안 낸/안 뽑은/안 가진 플레이어들 (낸 카드 + 결투 남은 카드 + 타이브레이크 카드 기준)
+      function playersWithZeroGwang() {
+        const holderIds = new Set(gwangHoldersCount().map(h => h.player.id));
+        return currentPlays.filter(p => !holderIds.has(p.id));
+      }
+
+      // 필드 광 카드가 3장이면 결투/타이브레이크 진행 상황과 무관하게 즉시 승자 확정
+      function checkGwangOverride() {
+        if (totalFieldGwangCount() !== 3) return false;
+        const holders = gwangHoldersCount();
+        let winners;
+        // 예외: 광땡(2장)+낱장 광(1장) 분포면 낱장 광 낸 사람이 승리
+        if (holders.length === 2) {
+          const ddang = holders.find(h => h.count === 2);
+          const lone = holders.find(h => h.count === 1);
+          if (ddang && lone) winners = [lone.player];
         }
+        if (!winners) winners = playersWithZeroGwang(); // 그 외 분포는 광 없는 전원 공동 승리
+        finalizeRoundWinner(winners.map(p => p.id));
+        return true;
+      }
 
-        // 내가 결투 당사자인데 아직 내 남은 카드를 공개 안 했다면, 지금 공개(비공개 손패 → 공개 데이터로 이동)
-        function revealMyRemainIfNeeded() {
-          if (!window.isMultiplayerGame || window.myGameId === null || !myHand.length) return false;
-          const singlePlays = currentPlays.filter(p => p.played.length === 1);
-          const mine = singlePlays.find(p => p.id === window.myGameId);
-          if (!mine || mine.revealedRemain) return false;
-          const opponent = singlePlays.find(p => p.id !== window.myGameId && p.played[0].number === mine.played[0].number);
-          if (!opponent) return false;
-          mine.revealedRemain = findRemainCard(myHand, mine.played[0]);
-          return true;
-        }
+      function isForcedPlay(hand) {
+        const sameNumber = hand[0].number === hand[1].number; // 개인 땡
+        const bothGwang = hand[0].isGwang && hand[1].isGwang;  // 광땡
+        return sameNumber || bothGwang;
+      }
 
-        function getRemainingDeck() {
-          const deck = createDeck();
-          const removeMatch = (c) => {
-            const idx = deck.findIndex(d => d.number === c.number && d.isGwang === c.isGwang);
-            if (idx !== -1) deck.splice(idx, 1);
-          };
-          // 아는 만큼만 제외함 (숨겨진 남의 손패는 알 수 없어 완벽하진 않지만, 결투 당사자는 이 시점에 이미 공개된 상태)
-          currentPlays.forEach(p => (getEffectiveHandForLogic(p) || p.played).forEach(removeMatch));
-          extraCardsUsed.forEach(e => removeMatch(e.card)); // 이미 타이브레이크로 뽑힌 카드도 제외
-          return deck;
-        }
+      async function dealAndRender() {
+        const deck = createDeck();
+        currentHands = dealHands(deck, 5);
 
-        function drawSingleCard() {
-          const remaining = shuffle(getRemainingDeck());
-          return remaining[0];
-        }
+        const chosenMode = getChosenRoundMode();
+        const reveal = window.computeModeReveal(chosenMode, currentHands);
+        currentRoundMode = reveal.roundMode;
+        randomReveal = reveal.randomReveal;
+        gwangCountRevealed = reveal.gwangCountRevealed;
 
-        // 필드에 나온 광 카드 총 장수: 각자 낸 카드 + 결투로 공개된 남은 카드 + 타이브레이크로 뽑은 카드까지 전부 포함
-        function totalFieldGwangCount() {
-          let count = 0;
-          currentPlays.forEach(p => { count += p.played.filter(c => c.isGwang).length; });
-          count += extraCardsUsed.filter(e => e.card.isGwang).length;
-          // 결투가 있었다면, 결투 중 공개된 남은 카드(remain)도 필드에 드러난 카드로 카운트
-          findDuels(currentPlaysForLogic).forEach(d => {
-            if (d.remain1.isGwang) count++;
-            if (d.remain2.isGwang) count++;
-          });
-          return count;
-        }
-
-        // 각 플레이어가 지금까지(낸 카드+결투 남은 카드+타이브레이크 카드) 가진 광 카드 수
-        function gwangHoldersCount() {
-          const duels = findDuels(currentPlaysForLogic);
-          return currentPlays.map(p => {
-            let count = p.played.filter(c => c.isGwang).length;
-            const duel = duels.find(d => d.p1.id === p.id || d.p2.id === p.id);
-            if (duel) {
-              const remain = duel.p1.id === p.id ? duel.remain1 : duel.remain2;
-              if (remain.isGwang) count++;
-            }
-            count += extraCardsUsed.filter(e => e.playerId === p.id && e.card.isGwang).length;
-            return { player: p, count };
-          }).filter(h => h.count > 0);
-        }
-
-        // 광을 하나도 안 낸/안 뽑은/안 가진 플레이어들 (낸 카드 + 결투 남은 카드 + 타이브레이크 카드 기준)
-        function playersWithZeroGwang() {
-          const holderIds = new Set(gwangHoldersCount().map(h => h.player.id));
-          return currentPlays.filter(p => !holderIds.has(p.id));
-        }
-
-        // 필드 광 카드가 3장이면 결투/타이브레이크 진행 상황과 무관하게 즉시 승자 확정
-        function checkGwangOverride() {
-          if (totalFieldGwangCount() !== 3) return false;
-          const holders = gwangHoldersCount();
-          let winners;
-          // 예외: 광땡(2장)+낱장 광(1장) 분포면 낱장 광 낸 사람이 승리
-          if (holders.length === 2) {
-            const ddang = holders.find(h => h.count === 2);
-            const lone = holders.find(h => h.count === 1);
-            if (ddang && lone) winners = [lone.player];
-          }
-          if (!winners) winners = playersWithZeroGwang(); // 그 외 분포는 광 없는 전원 공동 승리
-          finalizeRoundWinner(winners.map(p => p.id));
-          return true;
-        }
-
-        function isForcedPlay(hand) {
-          const sameNumber = hand[0].number === hand[1].number; // 개인 땡
-          const bothGwang = hand[0].isGwang && hand[1].isGwang;  // 광땡
-          return sameNumber || bothGwang;
-        }
-
-        async function dealAndRender() {
-          const deck = createDeck();
-          currentHands = dealHands(deck, 5);
-
-          const chosenMode = getChosenRoundMode();
-          const reveal = window.computeModeReveal(chosenMode, currentHands);
-          currentRoundMode = reveal.roundMode;
-          randomReveal = reveal.randomReveal;
-          gwangCountRevealed = reveal.gwangCountRevealed;
-
-          if (window.isMultiplayerGame) {
-            // 각자 손패는 비공개 문서에 따로 저장 (공개 데이터엔 낸 카드만 실림)
-            for (let i = 0; i < 5; i++) {
-              const hand = currentHands[i];
-              const uid = window.uidByGameId[i];
-              if (uid) await window.writePrivateHand(uid, hand);
-            }
-            currentPlays = currentHands.map((hand, i) => ({
-              id: i,
-              played: isForcedPlay(hand) ? [hand[0], hand[1]] : [],
-            }));
-            if (window.myGameId !== null) myHand = currentHands[window.myGameId]; // 딜러(방장) 본인 손패도 반영
-          } else {
-            currentPlays = currentHands.map((hand, i) => ({
-              id: i,
-              hand,
-              played: isForcedPlay(hand) ? [hand[0], hand[1]] : [],
-            }));
-          }
-
-          replayPair = null;
-          extraCardsUsed = [];
-          dealtAt = Date.now(); // 이 시점부터 5명 모두 10초 카운트다운 시작
-          initScoresIfNeeded(); // 이미 있는 점수는 그대로 두고, 없을 때만(방 첫 시작) 200점으로 채움
-          roundScored = false; // 새 라운드니까 점수 반영 플래그 초기화
-          setDealButtonsEnabled(true);
-          document.getElementById('result').textContent = '';
-          document.getElementById('duelSpotlight').style.display = 'none';
-          document.getElementById('nextRoundBtn').style.display = 'none';
-          document.getElementById('nextRoundModeBox').style.display = 'none';
-          renderPlayers();
-          renderScoreboard();
-          renderRoundModeBadge();
-          renderModeReveal();
-          scheduleAutoPlay();
-          pushGameState();
-        }
-
-        // 라운드가 끝난 뒤 "다음 라운드" 버튼으로 호출 - 새 카드로 다음 판 시작하고 라운드 번호 올림
-        async function startNextRound() {
-          if (window.isMultiplayerGame && !window.isHost) return; // 방장만 다음 라운드 진행 가능
-          roundNumber += 1;
-          document.getElementById('roundLabel').textContent = `라운드 ${roundNumber}`;
-          await dealAndRender();
-        }
-
-        function setDealButtonsEnabled(enabled) {
-          document.getElementById('dealBtn').disabled = !enabled;
-          document.getElementById('customBtn').disabled = !enabled;
-          document.getElementById('dealBtn').style.opacity = enabled ? '1' : '0.4';
-          document.getElementById('customBtn').style.opacity = enabled ? '1' : '0.4';
-        }
-
-        async function startReplay(id1, id2) {
-          replayPair = [id1, id2];
-          const deck = createDeck();
-          const shuffled = shuffle(deck);
-          const hand1 = [shuffled[0], shuffled[1]];
-          const hand2 = [shuffled[2], shuffled[3]];
-
-          if (window.isMultiplayerGame) {
-            const uid1 = window.uidByGameId[id1];
-            const uid2 = window.uidByGameId[id2];
-            if (uid1) await window.writePrivateHand(uid1, hand1);
-            if (uid2) await window.writePrivateHand(uid2, hand2);
-            currentPlays[id1] = { id: id1, played: isForcedPlay(hand1) ? hand1.slice() : [] };
-            currentPlays[id2] = { id: id2, played: isForcedPlay(hand2) ? hand2.slice() : [] };
-            if (window.myGameId === id1) myHand = hand1;
-            if (window.myGameId === id2) myHand = hand2;
-          } else {
-            currentPlays[id1].hand = hand1;
-            currentPlays[id1].played = isForcedPlay(hand1) ? hand1.slice() : [];
-            currentPlays[id2].hand = hand2;
-            currentPlays[id2].played = isForcedPlay(hand2) ? hand2.slice() : [];
-          }
-          extraCardsUsed = []; // 손패가 완전히 바뀌었으니 타이브레이크 기록도 초기화
-          dealtAt = Date.now(); // 재대결도 새 카운트다운 시작
-
-          setDealButtonsEnabled(false); // 재대결 중엔 전체 카드 분배/커스텀 설정 잠금
-          document.getElementById('duelSpotlight').style.display = 'none';
-          document.getElementById('result').textContent =
-            `재대결! ${playerLabel(id1)}, ${playerLabel(id2)}만 새 카드를 받았어요 - 카드를 내고 "결과 확인"을 다시 눌러주세요`;
-          const dimIds = new Set(currentPlays.map(p => p.id).filter(id => id !== id1 && id !== id2));
-          renderPlayers(dimIds, new Set());
-          scheduleAutoPlay();
-          pushGameState();
-        }
-
-        function toggleHelp(show) {
-          document.getElementById('helpOverlay').style.display = show ? 'flex' : 'none';
-        }
-
-        function toggleCustomForm() {
-          const box = document.getElementById('customForm');
-          if (box.style.display === 'block') {
-            box.style.display = 'none';
-            return;
-          }
-          renderCustomForm();
-          box.style.display = 'block';
-        }
-
-        function numberOptionsHtml(selected) {
-          let html = '';
-          for (let n = 1; n <= 10; n++) {
-            html += `<option value="${n}" ${n === selected ? 'selected' : ''}>${n}</option>`;
-          }
-          return html;
-        }
-
-        function renderCustomForm() {
-          const box = document.getElementById('customForm');
-          let html = `<h2>플레이어별 카드 직접 설정 (숫자 + 광 여부)</h2>`;
+        if (window.isMultiplayerGame) {
+          // 각자 손패는 비공개 문서에 따로 저장 (공개 데이터엔 낸 카드만 실림)
           for (let i = 0; i < 5; i++) {
-            html += `
+            const hand = currentHands[i];
+            const uid = window.uidByGameId[i];
+            if (uid) await window.writePrivateHand(uid, hand);
+          }
+          currentPlays = currentHands.map((hand, i) => ({
+            id: i,
+            played: isForcedPlay(hand) ? [hand[0], hand[1]] : [],
+          }));
+          if (window.myGameId !== null) myHand = currentHands[window.myGameId]; // 딜러(방장) 본인 손패도 반영
+        } else {
+          currentPlays = currentHands.map((hand, i) => ({
+            id: i,
+            hand,
+            played: isForcedPlay(hand) ? [hand[0], hand[1]] : [],
+          }));
+        }
+
+        replayPair = null;
+        extraCardsUsed = [];
+        dealtAt = Date.now(); // 이 시점부터 5명 모두 10초 카운트다운 시작
+        initScoresIfNeeded(); // 이미 있는 점수는 그대로 두고, 없을 때만(방 첫 시작) 200점으로 채움
+        roundScored = false; // 새 라운드니까 점수 반영 플래그 초기화
+        setDealButtonsEnabled(true);
+        document.getElementById('result').textContent = '';
+        document.getElementById('duelSpotlight').style.display = 'none';
+        document.getElementById('nextRoundBtn').style.display = 'none';
+        document.getElementById('nextRoundModeBox').style.display = 'none';
+        renderPlayers();
+        renderScoreboard();
+        renderRoundModeBadge();
+        renderModeReveal();
+        scheduleAutoPlay();
+        pushGameState();
+      }
+
+      // 라운드가 끝난 뒤 "다음 라운드" 버튼으로 호출 - 새 카드로 다음 판 시작하고 라운드 번호 올림
+      async function startNextRound() {
+        if (window.isMultiplayerGame && !window.isHost) return; // 방장만 다음 라운드 진행 가능
+        roundNumber += 1;
+        document.getElementById('roundLabel').textContent = `라운드 ${roundNumber}`;
+        await dealAndRender();
+      }
+
+      function setDealButtonsEnabled(enabled) {
+        document.getElementById('dealBtn').disabled = !enabled;
+        document.getElementById('customBtn').disabled = !enabled;
+        document.getElementById('dealBtn').style.opacity = enabled ? '1' : '0.4';
+        document.getElementById('customBtn').style.opacity = enabled ? '1' : '0.4';
+      }
+
+      async function startReplay(id1, id2) {
+        replayPair = [id1, id2];
+        const deck = createDeck();
+        const shuffled = shuffle(deck);
+        const hand1 = [shuffled[0], shuffled[1]];
+        const hand2 = [shuffled[2], shuffled[3]];
+
+        if (window.isMultiplayerGame) {
+          const uid1 = window.uidByGameId[id1];
+          const uid2 = window.uidByGameId[id2];
+          if (uid1) await window.writePrivateHand(uid1, hand1);
+          if (uid2) await window.writePrivateHand(uid2, hand2);
+          currentPlays[id1] = { id: id1, played: isForcedPlay(hand1) ? hand1.slice() : [] };
+          currentPlays[id2] = { id: id2, played: isForcedPlay(hand2) ? hand2.slice() : [] };
+          if (window.myGameId === id1) myHand = hand1;
+          if (window.myGameId === id2) myHand = hand2;
+        } else {
+          currentPlays[id1].hand = hand1;
+          currentPlays[id1].played = isForcedPlay(hand1) ? hand1.slice() : [];
+          currentPlays[id2].hand = hand2;
+          currentPlays[id2].played = isForcedPlay(hand2) ? hand2.slice() : [];
+        }
+        extraCardsUsed = []; // 손패가 완전히 바뀌었으니 타이브레이크 기록도 초기화
+        dealtAt = Date.now(); // 재대결도 새 카운트다운 시작
+
+        setDealButtonsEnabled(false); // 재대결 중엔 전체 카드 분배/커스텀 설정 잠금
+        document.getElementById('duelSpotlight').style.display = 'none';
+        document.getElementById('result').textContent =
+          `재대결! ${playerLabel(id1)}, ${playerLabel(id2)}만 새 카드를 받았어요 - 카드를 내고 "결과 확인"을 다시 눌러주세요`;
+        const dimIds = new Set(currentPlays.map(p => p.id).filter(id => id !== id1 && id !== id2));
+        renderPlayers(dimIds, new Set());
+        scheduleAutoPlay();
+        pushGameState();
+      }
+
+      function toggleHelp(show) {
+        document.getElementById('helpOverlay').style.display = show ? 'flex' : 'none';
+      }
+
+      function toggleCustomForm() {
+        const box = document.getElementById('customForm');
+        if (box.style.display === 'block') {
+          box.style.display = 'none';
+          return;
+        }
+        renderCustomForm();
+        box.style.display = 'block';
+      }
+
+      function numberOptionsHtml(selected) {
+        let html = '';
+        for (let n = 1; n <= 10; n++) {
+          html += `<option value="${n}" ${n === selected ? 'selected' : ''}>${n}</option>`;
+        }
+        return html;
+      }
+
+      function renderCustomForm() {
+        const box = document.getElementById('customForm');
+        let html = `<h2>플레이어별 카드 직접 설정 (숫자 + 광 여부)</h2>`;
+        for (let i = 0; i < 5; i++) {
+          html += `
           <div class="custom-row">
             <div class="label">${playerLabel(i)}</div>
             <select id="c${i}_0_num">${numberOptionsHtml(1)}</select>
@@ -545,143 +564,143 @@
             <select id="c${i}_1_num">${numberOptionsHtml(2)}</select>
             <label class="gwang-check"><input type="checkbox" id="c${i}_1_gwang"> 광</label>
           </div>`;
-          }
-          html += `<div style="text-align:center"><button class="apply-btn" onclick="applyCustomHands()">이 조합으로 시작</button></div>`;
-          box.innerHTML = html;
+        }
+        html += `<div style="text-align:center"><button class="apply-btn" onclick="applyCustomHands()">이 조합으로 시작</button></div>`;
+        box.innerHTML = html;
+      }
+
+      async function applyCustomHands() {
+        const hands = [];
+        for (let i = 0; i < 5; i++) {
+          const num0 = Number(document.getElementById(`c${i}_0_num`).value);
+          const gwang0 = document.getElementById(`c${i}_0_gwang`).checked;
+          const num1 = Number(document.getElementById(`c${i}_1_num`).value);
+          const gwang1 = document.getElementById(`c${i}_1_gwang`).checked;
+          hands.push([
+            { number: num0, isGwang: gwang0 },
+            { number: num1, isGwang: gwang1 },
+          ]);
         }
 
-        async function applyCustomHands() {
-          const hands = [];
+        if (window.isMultiplayerGame) {
+          // 각자 손패는 비공개 문서에 따로 저장 (공개 데이터엔 낸 카드만 실림) - dealAndRender와 동일한 방식
           for (let i = 0; i < 5; i++) {
-            const num0 = Number(document.getElementById(`c${i}_0_num`).value);
-            const gwang0 = document.getElementById(`c${i}_0_gwang`).checked;
-            const num1 = Number(document.getElementById(`c${i}_1_num`).value);
-            const gwang1 = document.getElementById(`c${i}_1_gwang`).checked;
-            hands.push([
-              { number: num0, isGwang: gwang0 },
-              { number: num1, isGwang: gwang1 },
-            ]);
+            const uid = window.uidByGameId[i];
+            if (uid) await window.writePrivateHand(uid, hands[i]);
           }
+          currentPlays = hands.map((hand, i) => ({
+            id: i,
+            played: isForcedPlay(hand) ? [hand[0], hand[1]] : [],
+          }));
+          if (window.myGameId !== null) myHand = hands[window.myGameId];
+        } else {
+          currentPlays = hands.map((hand, i) => ({
+            id: i,
+            hand,
+            played: isForcedPlay(hand) ? [hand[0], hand[1]] : [],
+          }));
+        }
 
-          if (window.isMultiplayerGame) {
-            // 각자 손패는 비공개 문서에 따로 저장 (공개 데이터엔 낸 카드만 실림) - dealAndRender와 동일한 방식
-            for (let i = 0; i < 5; i++) {
-              const uid = window.uidByGameId[i];
-              if (uid) await window.writePrivateHand(uid, hands[i]);
-            }
-            currentPlays = hands.map((hand, i) => ({
-              id: i,
-              played: isForcedPlay(hand) ? [hand[0], hand[1]] : [],
-            }));
-            if (window.myGameId !== null) myHand = hands[window.myGameId];
+        replayPair = null;
+        extraCardsUsed = [];
+        dealtAt = Date.now();
+        setDealButtonsEnabled(true);
+        document.getElementById('customForm').style.display = 'none';
+        document.getElementById('duelSpotlight').style.display = 'none';
+        document.getElementById('nextRoundBtn').style.display = 'none';
+        document.getElementById('result').textContent = '커스텀 조합 적용됨';
+        renderPlayers();
+        scheduleAutoPlay();
+        pushGameState();
+      }
+
+      function selectCard(playerIndex, cardIndex) {
+        if (window.isMultiplayerGame && window.myGameId !== null && playerIndex !== window.myGameId) {
+          return; // 멀티플레이 중엔 본인 카드만 낼 수 있음
+        }
+        const play = currentPlays[playerIndex];
+        const hand = window.isMultiplayerGame ? myHand : play.hand;
+        if (isForcedPlay(hand)) return; // 땡/광땡이면 선택 불가(이미 자동)
+        play.played = [hand[cardIndex]];
+        const dimIds = replayPair
+          ? new Set(currentPlays.map(p => p.id).filter(id => !replayPair.includes(id)))
+          : new Set();
+        renderPlayers(dimIds);
+        pushGameState();
+      }
+
+      function cardHtml(c) {
+        if (c && c.hidden) return `<span class="card back">?</span>`;
+        return `<span class="card ${c.isGwang ? 'gwang' : 'normal'}">${c.number}${c.isGwang ? '광' : ''}</span>`;
+      }
+
+      function renderPlayers(dimIds = new Set(), winnerIds = new Set()) {
+        const container = document.getElementById('players');
+        container.innerHTML = '';
+
+        // 판정 대상(재대결 중이면 그 둘만, 아니면 전원)이 다 냈어야 "다같이 공개"
+        const revealTargets = replayPair ? replayPair.map(id => currentPlays[id]) : currentPlays;
+        const revealPlayed = revealTargets.length > 0 && revealTargets.every(p => p.played.length > 0);
+
+        currentPlays.forEach((play, i) => {
+          const div = document.createElement('div');
+          div.className = `player player-${i + 1}`;
+          if (winnerIds.has(i)) div.classList.add('winner');
+          if (dimIds.has(i)) div.classList.add('duel-loser');
+
+          const isMe = !window.isMultiplayerGame || play.id === window.myGameId;
+          const displayHand = getDisplayHand(play, revealPlayed);
+          const isDdang = play.played.length === 2;
+
+          const cardsHtml = displayHand.map(c => {
+            const isPlayed = c.hidden ? false : play.played.some(pc => pc.number === c.number && pc.isGwang === c.isGwang);
+            return c.hidden
+              ? `<span class="card back">?</span>`
+              : `<span class="card ${c.isGwang ? 'gwang' : 'normal'} ${isPlayed ? 'played' : ''}">${c.number}${c.isGwang ? '광' : ''}</span>`;
+          }).join('');
+
+          let buttonsHtml;
+          if (!isMe && !revealPlayed) {
+            // 아직 다같이 공개되기 전 - 냈는지 여부조차 안 보여줌
+            // (땡/광땡은 분배되자마자 자동으로 "냄" 상태가 되기 때문에, 그 타이밍 차이로도
+            //  패를 유추할 수 있어서 아예 상태 표시를 안 함)
+            buttonsHtml = `<div class="status">진행 중...</div>`;
+          } else if (isDdang) {
+            buttonsHtml = `<div class="status">${displayHand[0].isGwang && displayHand[1].isGwang ? '광땡' : '땡'} - 자동으로 2장 다 냄</div>`;
+          } else if (isMe) {
+            buttonsHtml = displayHand.map((c, ci) =>
+              `<button class="play-btn" onclick="selectCard(${i},${ci})" ${play.played.some(pc => pc.number === c.number && pc.isGwang === c.isGwang) ? 'disabled' : ''}>${c.number}${c.isGwang ? '광' : ''} 내기</button>`
+            ).join('');
           } else {
-            currentPlays = hands.map((hand, i) => ({
-              id: i,
-              hand,
-              played: isForcedPlay(hand) ? [hand[0], hand[1]] : [],
-            }));
+            buttonsHtml = `<div class="status">카드 냄</div>`;
           }
 
-          replayPair = null;
-          extraCardsUsed = [];
-          dealtAt = Date.now();
-          setDealButtonsEnabled(true);
-          document.getElementById('customForm').style.display = 'none';
-          document.getElementById('duelSpotlight').style.display = 'none';
-          document.getElementById('nextRoundBtn').style.display = 'none';
-          document.getElementById('result').textContent = '커스텀 조합 적용됨';
-          renderPlayers();
-          scheduleAutoPlay();
-          pushGameState();
+          div.innerHTML = `<h3>${playerLabel(i)}</h3>${cardsHtml}<div>${buttonsHtml}</div>`;
+          container.appendChild(div);
+        });
+      }
+
+      function getExtraCardsFor(id1, id2) {
+        const c1 = extraCardsUsed.find(e => e.playerId === id1);
+        const c2 = extraCardsUsed.find(e => e.playerId === id2);
+        return (c1 && c2) ? { c1: c1.card, c2: c2.card } : null;
+      }
+
+      function renderDuelSpotlight(duels) {
+        const box = document.getElementById('duelSpotlight');
+        if (duels.length === 0) {
+          box.style.display = 'none';
+          return;
         }
-
-        function selectCard(playerIndex, cardIndex) {
-          if (window.isMultiplayerGame && window.myGameId !== null && playerIndex !== window.myGameId) {
-            return; // 멀티플레이 중엔 본인 카드만 낼 수 있음
-          }
-          const play = currentPlays[playerIndex];
-          const hand = window.isMultiplayerGame ? myHand : play.hand;
-          if (isForcedPlay(hand)) return; // 땡/광땡이면 선택 불가(이미 자동)
-          play.played = [hand[cardIndex]];
-          const dimIds = replayPair
-            ? new Set(currentPlays.map(p => p.id).filter(id => !replayPair.includes(id)))
-            : new Set();
-          renderPlayers(dimIds);
-          pushGameState();
-        }
-
-        function cardHtml(c) {
-          if (c && c.hidden) return `<span class="card back">?</span>`;
-          return `<span class="card ${c.isGwang ? 'gwang' : 'normal'}">${c.number}${c.isGwang ? '광' : ''}</span>`;
-        }
-
-        function renderPlayers(dimIds = new Set(), winnerIds = new Set()) {
-          const container = document.getElementById('players');
-          container.innerHTML = '';
-
-          // 판정 대상(재대결 중이면 그 둘만, 아니면 전원)이 다 냈어야 "다같이 공개"
-          const revealTargets = replayPair ? replayPair.map(id => currentPlays[id]) : currentPlays;
-          const revealPlayed = revealTargets.length > 0 && revealTargets.every(p => p.played.length > 0);
-
-          currentPlays.forEach((play, i) => {
-            const div = document.createElement('div');
-            div.className = `player player-${i + 1}`;
-            if (winnerIds.has(i)) div.classList.add('winner');
-            if (dimIds.has(i)) div.classList.add('duel-loser');
-
-            const isMe = !window.isMultiplayerGame || play.id === window.myGameId;
-            const displayHand = getDisplayHand(play, revealPlayed);
-            const isDdang = play.played.length === 2;
-
-            const cardsHtml = displayHand.map(c => {
-              const isPlayed = c.hidden ? false : play.played.some(pc => pc.number === c.number && pc.isGwang === c.isGwang);
-              return c.hidden
-                ? `<span class="card back">?</span>`
-                : `<span class="card ${c.isGwang ? 'gwang' : 'normal'} ${isPlayed ? 'played' : ''}">${c.number}${c.isGwang ? '광' : ''}</span>`;
-            }).join('');
-
-            let buttonsHtml;
-            if (!isMe && !revealPlayed) {
-              // 아직 다같이 공개되기 전 - 냈는지 여부조차 안 보여줌
-              // (땡/광땡은 분배되자마자 자동으로 "냄" 상태가 되기 때문에, 그 타이밍 차이로도
-              //  패를 유추할 수 있어서 아예 상태 표시를 안 함)
-              buttonsHtml = `<div class="status">진행 중...</div>`;
-            } else if (isDdang) {
-              buttonsHtml = `<div class="status">${displayHand[0].isGwang && displayHand[1].isGwang ? '광땡' : '땡'} - 자동으로 2장 다 냄</div>`;
-            } else if (isMe) {
-              buttonsHtml = displayHand.map((c, ci) =>
-                `<button class="play-btn" onclick="selectCard(${i},${ci})" ${play.played.some(pc => pc.number === c.number && pc.isGwang === c.isGwang) ? 'disabled' : ''}>${c.number}${c.isGwang ? '광' : ''} 내기</button>`
-              ).join('');
-            } else {
-              buttonsHtml = `<div class="status">카드 냄</div>`;
-            }
-
-            div.innerHTML = `<h3>${playerLabel(i)}</h3>${cardsHtml}<div>${buttonsHtml}</div>`;
-            container.appendChild(div);
-          });
-        }
-
-        function getExtraCardsFor(id1, id2) {
-          const c1 = extraCardsUsed.find(e => e.playerId === id1);
-          const c2 = extraCardsUsed.find(e => e.playerId === id2);
-          return (c1 && c2) ? { c1: c1.card, c2: c2.card } : null;
-        }
-
-        function renderDuelSpotlight(duels) {
-          const box = document.getElementById('duelSpotlight');
-          if (duels.length === 0) {
-            box.style.display = 'none';
-            return;
-          }
-          box.style.display = 'block';
-          box.classList.toggle('replay-box', duels.some(d => d.replay));
-          box.innerHTML = `<h2>⚔ 1vs1 결투 발생 (${duels.length}곳)</h2>` +
-            duels.map(d => {
-              const p1IsWinner = d.winner === d.p1;
-              const tag1 = d.replay ? '' : (p1IsWinner ? ' ▶ 승' : '');
-              const tag2 = d.replay ? '' : (!p1IsWinner ? ' ▶ 승' : '');
-              const existingExtra = d.replay ? getExtraCardsFor(d.p1.id, d.p2.id) : null;
-              return `
+        box.style.display = 'block';
+        box.classList.toggle('replay-box', duels.some(d => d.replay));
+        box.innerHTML = `<h2>⚔ 1vs1 결투 발생 (${duels.length}곳)</h2>` +
+          duels.map(d => {
+            const p1IsWinner = d.winner === d.p1;
+            const tag1 = d.replay ? '' : (p1IsWinner ? ' ▶ 승' : '');
+            const tag2 = d.replay ? '' : (!p1IsWinner ? ' ▶ 승' : '');
+            const existingExtra = d.replay ? getExtraCardsFor(d.p1.id, d.p2.id) : null;
+            return `
             <div class="duel-vs">
               <div class="duel-side ${!d.replay && p1IsWinner ? 'win' : ''}">
                 <div class="name">${playerLabel(d.p1.id)}</div>
@@ -701,98 +720,98 @@
               <div id="extraCustomForm_${d.p1.id}_${d.p2.id}"></div>` : ''}
             <div id="extraOutcome_${d.p1.id}_${d.p2.id}"></div>
             `;
-            }).join('<hr style="border-color:#5a3d1a;margin:16px 0">');
+          }).join('<hr style="border-color:#5a3d1a;margin:16px 0">');
 
-          // 이미 타이브레이크 카드가 뽑혀있는 결투는(다른 사람이 뽑았더라도) 그 결과를 그대로 재현
-          duels.filter(d => d.replay).forEach(d => {
-            const extra = getExtraCardsFor(d.p1.id, d.p2.id);
-            if (extra) renderExtraOutcome(d.p1.id, d.p2.id, extra.c1, extra.c2, `extraOutcome_${d.p1.id}_${d.p2.id}`);
+        // 이미 타이브레이크 카드가 뽑혀있는 결투는(다른 사람이 뽑았더라도) 그 결과를 그대로 재현
+        duels.filter(d => d.replay).forEach(d => {
+          const extra = getExtraCardsFor(d.p1.id, d.p2.id);
+          if (extra) renderExtraOutcome(d.p1.id, d.p2.id, extra.c1, extra.c2, `extraOutcome_${d.p1.id}_${d.p2.id}`);
+        });
+      }
+
+      function finalizeRoundWinner(winnerIds) {
+        const winnerSet = new Set(winnerIds);
+        const dimIds = new Set(currentPlays.map(p => p.id).filter(id => !winnerSet.has(id)));
+
+        // 승부가 결정됐으니, 각자 자기 몫의 "안 낸 카드"를 공개 (본인 것만 스스로 공개할 수 있음 - 비공개 손패라서)
+        if (window.isMultiplayerGame && window.myGameId !== null) {
+          const mine = currentPlays.find(p => p.id === window.myGameId);
+          if (mine && mine.played.length === 1 && !mine.revealedRemain && myHand.length === 2) {
+            mine.revealedRemain = findRemainCard(myHand, mine.played[0]);
+          }
+        }
+
+        if (!roundScored) {
+          initScoresIfNeeded();
+          currentPlays.forEach(p => {
+            scores[p.id] = (scores[p.id] ?? 200) + (winnerSet.has(p.id) ? 10 : -10);
           });
+          roundScored = true;
         }
+        renderScoreboard();
 
-        function finalizeRoundWinner(winnerIds) {
-          const winnerSet = new Set(winnerIds);
-          const dimIds = new Set(currentPlays.map(p => p.id).filter(id => !winnerSet.has(id)));
+        renderPlayers(dimIds, winnerSet);
+        document.getElementById('result').textContent = `승자: ${winnerIds.map(id => playerLabel(id)).join(', ')}`;
+        setDealButtonsEnabled(true);
+        // 멀티플레이 중엔 방장만 다음 라운드 버튼을 봄 (로컬 테스트 중엔 항상 보임)
+        const canShowNextRound = !window.isMultiplayerGame || window.isHost;
+        document.getElementById('nextRoundBtn').style.display = canShowNextRound ? 'inline-block' : 'none';
+        // 커스텀 모드 방이면, 방장에게 다음 라운드에 쓸 모드 선택창도 같이 보여줌
+        const showModeSelect = canShowNextRound && window.isMultiplayerGame && window.roomMode === 'custom';
+        document.getElementById('nextRoundModeBox').style.display = showModeSelect ? 'block' : 'none';
+        pushGameState();
+      }
 
-          // 승부가 결정됐으니, 각자 자기 몫의 "안 낸 카드"를 공개 (본인 것만 스스로 공개할 수 있음 - 비공개 손패라서)
-          if (window.isMultiplayerGame && window.myGameId !== null) {
-            const mine = currentPlays.find(p => p.id === window.myGameId);
-            if (mine && mine.played.length === 1 && !mine.revealedRemain && myHand.length === 2) {
-              mine.revealedRemain = findRemainCard(myHand, mine.played[0]);
-            }
-          }
-
-          if (!roundScored) {
-            initScoresIfNeeded();
-            currentPlays.forEach(p => {
-              scores[p.id] = (scores[p.id] ?? 200) + (winnerSet.has(p.id) ? 10 : -10);
-            });
-            roundScored = true;
-          }
-          renderScoreboard();
-
-          renderPlayers(dimIds, winnerSet);
-          document.getElementById('result').textContent = `승자: ${winnerIds.map(id => playerLabel(id)).join(', ')}`;
-          setDealButtonsEnabled(true);
-          // 멀티플레이 중엔 방장만 다음 라운드 버튼을 봄 (로컬 테스트 중엔 항상 보임)
-          const canShowNextRound = !window.isMultiplayerGame || window.isHost;
-          document.getElementById('nextRoundBtn').style.display = canShowNextRound ? 'inline-block' : 'none';
-          // 커스텀 모드 방이면, 방장에게 다음 라운드에 쓸 모드 선택창도 같이 보여줌
-          const showModeSelect = canShowNextRound && window.isMultiplayerGame && window.roomMode === 'custom';
-          document.getElementById('nextRoundModeBox').style.display = showModeSelect ? 'block' : 'none';
-          pushGameState();
-        }
-
-        // 결투 완전동률 타이브레이크에서 뽑힌 두 장(c1,c2)의 결과를 특정 영역에 렌더링 (초기 클릭/재현 공용)
-        function renderExtraOutcome(id1, id2, c1, c2, targetElId) {
-          const target = document.getElementById(targetElId);
-          if (!target) return;
-          let html = `<div class="duel-vs" style="margin-top:20px;">
+      // 결투 완전동률 타이브레이크에서 뽑힌 두 장(c1,c2)의 결과를 특정 영역에 렌더링 (초기 클릭/재현 공용)
+      function renderExtraOutcome(id1, id2, c1, c2, targetElId) {
+        const target = document.getElementById(targetElId);
+        if (!target) return;
+        let html = `<div class="duel-vs" style="margin-top:20px;">
           <div class="duel-side"><div class="name">${playerLabel(id1)} 추가 카드</div>${cardHtml(c1)}</div>
           <div class="duel-x">VS</div>
           <div class="duel-side"><div class="name">${playerLabel(id2)} 추가 카드</div>${cardHtml(c2)}</div>
         </div>`;
 
-          // 이 추가 카드로 필드 광이 3장이 됐으면, 결투 결과와 무관하게 광 없는 사람들이 승리
-          if (totalFieldGwangCount() === 3) {
-            target.innerHTML = html + `<div style="margin-top:12px;color:#f2c94c;font-weight:bold;">필드에 광 카드 3장 완성! 결투 결과와 무관하게 광 안 낸 사람들이 승리합니다</div>`;
-            checkGwangOverride();
-            return;
-          }
+        // 이 추가 카드로 필드 광이 3장이 됐으면, 결투 결과와 무관하게 광 없는 사람들이 승리
+        if (totalFieldGwangCount() === 3) {
+          target.innerHTML = html + `<div style="margin-top:12px;color:#f2c94c;font-weight:bold;">필드에 광 카드 3장 완성! 결투 결과와 무관하게 광 안 낸 사람들이 승리합니다</div>`;
+          checkGwangOverride();
+          return;
+        }
 
-          if (c1.number === c2.number) {
-            target.innerHTML = html +
-              `<div style="margin-top:12px;color:#e05d5d;font-weight:bold;">추가 카드도 동률! 이 두 명만 카드를 새로 받아 재대결합니다</div>
+        if (c1.number === c2.number) {
+          target.innerHTML = html +
+            `<div style="margin-top:12px;color:#e05d5d;font-weight:bold;">추가 카드도 동률! 이 두 명만 카드를 새로 받아 재대결합니다</div>
            <button class="replay-btn" onclick="startReplay(${id1},${id2})">재대결 시작</button>`;
-          } else {
-            const winnerId = c1.number > c2.number ? id1 : id2;
-            target.innerHTML = html + `<div style="margin-top:12px;color:#f2c94c;font-weight:bold;">숫자가 더 높은 ${playerLabel(winnerId)} 승리</div>`;
-            finalizeRoundWinner([winnerId]);
-          }
+        } else {
+          const winnerId = c1.number > c2.number ? id1 : id2;
+          target.innerHTML = html + `<div style="margin-top:12px;color:#f2c94c;font-weight:bold;">숫자가 더 높은 ${playerLabel(winnerId)} 승리</div>`;
+          finalizeRoundWinner([winnerId]);
         }
+      }
 
-        // 결투 완전동률 타이브레이크로 새로 뽑힌 두 장(c1,c2)을 기록하고 전체를 다시 평가 (랜덤/커스텀 공용)
-        function processExtraCards(id1, id2, c1, c2) {
-          extraCardsUsed.push({ playerId: id1, card: c1 });
-          extraCardsUsed.push({ playerId: id2, card: c2 });
-          pushGameState(); // 추가로 뽑은 카드부터 바로 동기화 (모두가 같은 카드를 봐야 함)
-          judgeAndRender(); // renderDuelSpotlight가 이 카드를 보고 renderExtraOutcome까지 이어서 처리함
+      // 결투 완전동률 타이브레이크로 새로 뽑힌 두 장(c1,c2)을 기록하고 전체를 다시 평가 (랜덤/커스텀 공용)
+      function processExtraCards(id1, id2, c1, c2) {
+        extraCardsUsed.push({ playerId: id1, card: c1 });
+        extraCardsUsed.push({ playerId: id2, card: c2 });
+        pushGameState(); // 추가로 뽑은 카드부터 바로 동기화 (모두가 같은 카드를 봐야 함)
+        judgeAndRender(); // renderDuelSpotlight가 이 카드를 보고 renderExtraOutcome까지 이어서 처리함
+      }
+
+      function drawExtraCards(id1, id2) {
+        const c1 = drawSingleCard();
+        const c2 = drawSingleCard();
+        processExtraCards(id1, id2, c1, c2);
+      }
+
+      function toggleExtraCustomForm(id1, id2) {
+        const box = document.getElementById(`extraCustomForm_${id1}_${id2}`);
+        if (!box) return;
+        if (box.innerHTML) {
+          box.innerHTML = '';
+          return;
         }
-
-        function drawExtraCards(id1, id2) {
-          const c1 = drawSingleCard();
-          const c2 = drawSingleCard();
-          processExtraCards(id1, id2, c1, c2);
-        }
-
-        function toggleExtraCustomForm(id1, id2) {
-          const box = document.getElementById(`extraCustomForm_${id1}_${id2}`);
-          if (!box) return;
-          if (box.innerHTML) {
-            box.innerHTML = '';
-            return;
-          }
-          box.innerHTML = `
+        box.innerHTML = `
         <div class="custom-row" style="margin-top:16px;">
           <div class="label">${playerLabel(id1)}</div>
           <select id="extra_${id1}_num">${numberOptionsHtml(1)}</select>
@@ -806,485 +825,485 @@
         <div style="text-align:center">
           <button class="apply-btn" onclick="applyCustomExtraCards(${id1},${id2})">이 카드로 적용</button>
         </div>`;
+      }
+
+      function applyCustomExtraCards(id1, id2) {
+        const c1 = {
+          number: Number(document.getElementById(`extra_${id1}_num`).value),
+          isGwang: document.getElementById(`extra_${id1}_gwang`).checked,
+        };
+        const c2 = {
+          number: Number(document.getElementById(`extra_${id2}_num`).value),
+          isGwang: document.getElementById(`extra_${id2}_gwang`).checked,
+        };
+        document.getElementById(`extraCustomForm_${id1}_${id2}`).innerHTML = '';
+        processExtraCards(id1, id2, c1, c2);
+      }
+
+      function judgeAndRender(fromButtonClick) {
+        // 재대결 모드면 재대결 중인 두 명만 판정 (다른 3명은 이미 아웃된 상태 유지)
+        const targetPlays = replayPair
+          ? replayPair.map(id => currentPlays[id])
+          : currentPlays;
+
+        if (targetPlays.length === 0) return; // 아직 아무 상태도 없음 (게임 시작 직후 첫 프레임 등)
+
+        if (targetPlays.some(p => p.played.length === 0)) {
+          // 아직 다 안 냈어도 손패/버튼은 항상 최신 상태로 보여줘야 함 (특히 원격에서 상태 로드된 경우)
+          document.getElementById('duelSpotlight').style.display = 'none';
+          document.getElementById('nextRoundBtn').style.display = 'none';
+          renderPlayers();
+          document.getElementById('result').textContent = fromButtonClick ? '아직 카드를 안 낸 플레이어가 있어요!' : '';
+          return;
         }
 
-        function applyCustomExtraCards(id1, id2) {
-          const c1 = {
-            number: Number(document.getElementById(`extra_${id1}_num`).value),
-            isGwang: document.getElementById(`extra_${id1}_gwang`).checked,
-          };
-          const c2 = {
-            number: Number(document.getElementById(`extra_${id2}_num`).value),
-            isGwang: document.getElementById(`extra_${id2}_gwang`).checked,
-          };
-          document.getElementById(`extraCustomForm_${id1}_${id2}`).innerHTML = '';
-          processExtraCards(id1, id2, c1, c2);
+        // 내가 결투 당사자면 내 남은 카드를 공개(비공개 손패 → 공개 데이터로 이동)
+        if (revealMyRemainIfNeeded()) {
+          pushGameState();
         }
 
-        function judgeAndRender(fromButtonClick) {
-          // 재대결 모드면 재대결 중인 두 명만 판정 (다른 3명은 이미 아웃된 상태 유지)
-          const targetPlays = replayPair
-            ? replayPair.map(id => currentPlays[id])
-            : currentPlays;
+        // 판정에 필요한 손패가 아직 다 안 모였으면(상대가 공개하는 중) 대기 표시만 하고 끝
+        currentPlaysForLogic = buildLogicalPlays(currentPlays) || [];
+        const logicalTargetPlays = replayPair
+          ? replayPair.map(id => currentPlaysForLogic.find(p => p.id === id)).filter(Boolean)
+          : currentPlaysForLogic;
 
-          if (targetPlays.length === 0) return; // 아직 아무 상태도 없음 (게임 시작 직후 첫 프레임 등)
+        if (currentPlaysForLogic.length === 0) {
+          renderPlayers();
+          document.getElementById('result').textContent = '상대방이 카드를 공개하는 중...';
+          return;
+        }
 
-          if (targetPlays.some(p => p.played.length === 0)) {
-            // 아직 다 안 냈어도 손패/버튼은 항상 최신 상태로 보여줘야 함 (특히 원격에서 상태 로드된 경우)
-            document.getElementById('duelSpotlight').style.display = 'none';
-            document.getElementById('nextRoundBtn').style.display = 'none';
-            renderPlayers();
-            document.getElementById('result').textContent = fromButtonClick ? '아직 카드를 안 낸 플레이어가 있어요!' : '';
-            return;
-          }
+        // 결투 유무와 상관없이, 필드에 광 카드가 이미 3장이면 그걸로 바로 확정
+        if (checkGwangOverride()) return;
 
-          // 내가 결투 당사자면 내 남은 카드를 공개(비공개 손패 → 공개 데이터로 이동)
-          if (revealMyRemainIfNeeded()) {
-            pushGameState();
-          }
+        const duels = findDuels(logicalTargetPlays);
+        const { winners, replayDuel } = getFinalWinner(logicalTargetPlays);
 
-          // 판정에 필요한 손패가 아직 다 안 모였으면(상대가 공개하는 중) 대기 표시만 하고 끝
-          currentPlaysForLogic = buildLogicalPlays(currentPlays) || [];
-          const logicalTargetPlays = replayPair
-            ? replayPair.map(id => currentPlaysForLogic.find(p => p.id === id)).filter(Boolean)
-            : currentPlaysForLogic;
-
-          if (currentPlaysForLogic.length === 0) {
-            renderPlayers();
-            document.getElementById('result').textContent = '상대방이 카드를 공개하는 중...';
-            return;
-          }
-
-          // 결투 유무와 상관없이, 필드에 광 카드가 이미 3장이면 그걸로 바로 확정
-          if (checkGwangOverride()) return;
-
-          const duels = findDuels(logicalTargetPlays);
-          const { winners, replayDuel } = getFinalWinner(logicalTargetPlays);
-
-          if (replayDuel) {
-            // 이번에도 완전 동률 - 다시 재대결 (버튼 계속 잠금)
-            const dimIds = new Set(currentPlays.map(p => p.id).filter(id => id !== replayDuel.p1.id && id !== replayDuel.p2.id));
-            renderDuelSpotlight(duels);
-            renderPlayers(dimIds, new Set());
-            return;
-          }
-
+        if (replayDuel) {
+          // 이번에도 완전 동률 - 다시 재대결 (버튼 계속 잠금)
+          const dimIds = new Set(currentPlays.map(p => p.id).filter(id => id !== replayDuel.p1.id && id !== replayDuel.p2.id));
           renderDuelSpotlight(duels);
-          replayPair = null;
-          finalizeRoundWinner(winners.map(w => w.id));
+          renderPlayers(dimIds, new Set());
+          return;
         }
 
-        // 로비 스크립트의 손패 구독에서 호출 - 내 손패가 도착/갱신되면 화면도 다시 그림
-        window.setMyHand = function (hand) {
-          myHand = hand || [];
-          if (window.isMultiplayerGame) judgeAndRender();
-        };
-
-        // 로비 스크립트가 Firestore에서 받은 게임 상태를 로컬 변수에 반영하고 다시 그림
-        window.loadGameState = function (gameData) {
-          currentPlays = gameData.plays || [];
-          extraCardsUsed = gameData.extraCardsUsed || [];
-          replayPair = gameData.replayPair || null;
-          roundNumber = gameData.roundNumber || 1;
-          scores = gameData.scores || {};
-          roundScored = gameData.scored || false;
-          dealtAt = gameData.dealtAt || null;
-          currentRoundMode = gameData.roundMode || 'normal';
-          randomReveal = gameData.randomReveal || null;
-          gwangCountRevealed = gameData.gwangCountRevealed ?? null;
-          document.getElementById('roundLabel').textContent = `라운드 ${roundNumber}`;
-          renderScoreboard();
-          renderRoundModeBadge();
-          renderModeReveal();
-          scheduleAutoPlay();
-          // 방금 받은 상태를 "이미 전송한 상태"로 표시해서, 재렌더링 중 나가는 push가 같은 내용을 다시 안 쏘게 함
-          lastPushedStateJSON = JSON.stringify({ plays: currentPlays, extraCardsUsed, replayPair, roundNumber, scores, roundScored, dealtAt, currentRoundMode, randomReveal, gwangCountRevealed });
-          judgeAndRender();
-        };
-
-        // 미리보기 모드면 로비를 건너뛰고 바로 게임 화면 + 랜덤 카드로 시작
-        if (window.isPreviewMode) {
-          document.getElementById('lobbyScreen').style.display = 'none';
-          document.getElementById('waitingScreen').style.display = 'none';
-          document.getElementById('gameScreen').style.display = 'block';
-          window.isMultiplayerGame = false;
-          window.myGameId = null;
-          dealAndRender();
-        }
-      </script>
-    </div>
-
-    <script type="module">
-      import { db, ensureSignedIn } from "./firebase-config.js";
-      import {
-        doc, setDoc, getDoc, updateDoc, onSnapshot, serverTimestamp, deleteField,
-        collection, query, where, getDocs, deleteDoc
-      } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-      let playerId = null; // 익명 로그인 후 uid로 채워짐
-      let currentRoomCode = null;
-      let unsubscribeRoom = null;
-      let afkCheckInterval = null;
-      let unsubscribeMyHand = null;
-      let isHost = false;
-
-      const readyPromise = ensureSignedIn().then(user => {
-        playerId = user.uid;
-        cleanupStaleRooms(); // 로그인 직후, 30분 넘은 대기중 방들을 한 번 정리
-      });
-
-      // 결제(빌링) 없이 오래된 방을 지우는 방법 - Firestore TTL은 유료 요금제가 필요해서,
-      // 대신 누군가 로비에 접속할 때마다 "30분 넘게 대기중인 방"을 찾아서 지움
-      async function cleanupStaleRooms() {
-        try {
-          const q = query(collection(db, 'rooms'), where('status', '==', 'waiting'));
-          const snap = await getDocs(q);
-          const cutoff = Date.now() - 30 * 60 * 1000;
-          const deletions = [];
-          snap.forEach(docSnap => {
-            const data = docSnap.data();
-            const createdMs = data.createdAt && data.createdAt.toMillis ? data.createdAt.toMillis() : null;
-            if (createdMs !== null && createdMs < cutoff) {
-              deletions.push(deleteDoc(docSnap.ref));
-            }
-          });
-          if (deletions.length) await Promise.all(deletions);
-        } catch (err) {
-          console.error('오래된 방 정리 중 오류(무시 가능):', err);
-        }
+        renderDuelSpotlight(duels);
+        replayPair = null;
+        finalizeRoundWinner(winners.map(w => w.id));
       }
 
-      function generateRoomCode() {
-        return String(Math.floor(1000 + Math.random() * 9000)); // 4자리
-      }
-
-      function withTimeout(promise, ms, label) {
-        return Promise.race([
-          promise,
-          new Promise((_, reject) => setTimeout(() => reject(new Error(`${label} 응답이 ${ms / 1000}초 동안 없어요 (네트워크 연결 문제로 보여요)`)), ms)),
-        ]);
-      }
-
-      window.handleCreateRoom = async function () {
-        await readyPromise;
-        const name = document.getElementById('createNameInput').value.trim().slice(0, 10);
-        if (!name) return showLobbyError('닉네임을 입력해주세요');
-
-        showLobbyError('방 만드는 중...');
-        try {
-          const selectedModeInput = document.querySelector('input[name="roomMode"]:checked');
-          const roomMode = selectedModeInput ? selectedModeInput.value : 'custom';
-          const code = generateRoomCode();
-          const roomRef = doc(db, 'rooms', code);
-          await withTimeout(setDoc(roomRef, {
-            hostId: playerId,
-            status: 'waiting',
-            roomMode,
-            createdAt: serverTimestamp(),
-            expiresAt: new Date(Date.now() + 30 * 60 * 1000), // 30분 안에 게임 시작 안 하면 TTL로 자동 삭제
-            players: {
-              [playerId]: { name, isHost: true, joinedAt: Date.now(), lastSeen: Date.now() }
-            }
-          }), 8000, '방 생성');
-          isHost = true;
-          showLobbyError('');
-          enterWaitingRoom(code);
-        } catch (err) {
-          console.error('방 생성 실패:', err);
-          showLobbyError('방 생성 실패: ' + err.message);
-        }
+      // 로비 스크립트의 손패 구독에서 호출 - 내 손패가 도착/갱신되면 화면도 다시 그림
+      window.setMyHand = function (hand) {
+        myHand = hand || [];
+        if (window.isMultiplayerGame) judgeAndRender();
       };
 
-      window.handleJoinRoom = async function () {
-        await readyPromise;
-        const code = document.getElementById('joinCodeInput').value.trim();
-        const name = document.getElementById('joinNameInput').value.trim().slice(0, 10);
-        if (!code || code.length !== 4) return showLobbyError('4자리 방 코드를 입력해주세요');
-        if (!name) return showLobbyError('닉네임을 입력해주세요');
-
-        showLobbyError('입장하는 중...');
-        try {
-          const roomRef = doc(db, 'rooms', code);
-          const snap = await getDoc(roomRef);
-          if (!snap.exists()) return showLobbyError('존재하지 않는 방 코드예요');
-
-          const data = snap.data();
-          const playerCount = Object.keys(data.players || {}).length;
-          if (playerCount >= 5) return showLobbyError('이미 5명이 꽉 찬 방이에요');
-          if (data.status !== 'waiting') return showLobbyError('이미 시작된 게임이에요');
-
-          const nameTaken = Object.values(data.players || {})
-            .some(p => p.name.trim().toLowerCase() === name.toLowerCase());
-          if (nameTaken) return showLobbyError('이미 이 방에서 쓰이고 있는 닉네임이에요');
-
-          await updateDoc(roomRef, {
-            [`players.${playerId}`]: { name, isHost: false, joinedAt: Date.now(), lastSeen: Date.now() }
-          });
-          isHost = false;
-          showLobbyError('');
-          enterWaitingRoom(code);
-        } catch (err) {
-          console.error('입장 실패:', err);
-          showLobbyError('입장 실패: ' + err.message);
-        }
+      // 로비 스크립트가 Firestore에서 받은 게임 상태를 로컬 변수에 반영하고 다시 그림
+      window.loadGameState = function (gameData) {
+        currentPlays = gameData.plays || [];
+        extraCardsUsed = gameData.extraCardsUsed || [];
+        replayPair = gameData.replayPair || null;
+        roundNumber = gameData.roundNumber || 1;
+        scores = gameData.scores || {};
+        roundScored = gameData.scored || false;
+        dealtAt = gameData.dealtAt || null;
+        currentRoundMode = gameData.roundMode || 'normal';
+        randomReveal = gameData.randomReveal || null;
+        gwangCountRevealed = gameData.gwangCountRevealed ?? null;
+        document.getElementById('roundLabel').textContent = `라운드 ${roundNumber}`;
+        renderScoreboard();
+        renderRoundModeBadge();
+        renderModeReveal();
+        scheduleAutoPlay();
+        // 방금 받은 상태를 "이미 전송한 상태"로 표시해서, 재렌더링 중 나가는 push가 같은 내용을 다시 안 쏘게 함
+        lastPushedStateJSON = JSON.stringify({ plays: currentPlays, extraCardsUsed, replayPair, roundNumber, scores, roundScored, dealtAt, currentRoundMode, randomReveal, gwangCountRevealed });
+        judgeAndRender();
       };
 
-      function showLobbyError(msg) {
-        document.getElementById('lobbyError').textContent = msg;
-      }
-
-      // 내 손패(비공개 문서)를 구독 - 방장이 딜하면 이걸 통해서만 내 카드를 받아옴
-      function subscribeMyHand(code) {
-        if (unsubscribeMyHand) unsubscribeMyHand();
-        const handRef = doc(db, 'rooms', code, 'hands', playerId);
-        unsubscribeMyHand = onSnapshot(handRef, (snap) => {
-          if (!snap.exists()) return;
-          window.setMyHand(snap.data().hand || []);
-        });
-      }
-
-      // 게임 스크립트(카드 로직)가 손패를 쓸 때 호출하는 통로
-      window.writePrivateHand = async function (uid, hand) {
-        await setDoc(doc(db, 'rooms', currentRoomCode, 'hands', uid), { hand });
-      };
-
-      const HEARTBEAT_MS = 8000;
-      let heartbeatInterval = null;
-
-      // 누군가(강퇴/직접 나가기/AFK 감지) 방을 떠날 때 공통으로 쓰는 처리
-      // - players 목록에서 제거
-      // - 나간 사람이 방장이면 남아있는 사람 중 가장 먼저 들어온 사람에게 방장 자동 위임
-      // - 게임이 진행 중이었다면(5인 고정 구조라 한 명 빠지면 이어갈 수 없음) 중단하고 대기실로 되돌림
-      window.handlePlayerDeparture = async function (uid) {
-        if (!currentRoomCode || !uid) return;
-        const roomRef = doc(db, 'rooms', currentRoomCode);
-        try {
-          const snap = await getDoc(roomRef);
-          if (!snap.exists()) return;
-          const data = snap.data();
-          const players = { ...(data.players || {}) };
-          if (!players[uid]) return; // 이미 처리됨 (중복 호출 방지)
-          delete players[uid];
-
-          const updates = { [`players.${uid}`]: deleteField() };
-
-          if (data.hostId === uid) {
-            const remaining = Object.entries(players).sort((a, b) => a[1].joinedAt - b[1].joinedAt);
-            if (remaining.length > 0) {
-              const [newHostUid] = remaining[0];
-              updates.hostId = newHostUid;
-              updates[`players.${newHostUid}.isHost`] = true;
-            }
-          }
-
-          if (data.status === 'playing') {
-            updates.status = 'waiting';
-            updates.idByPlayer = deleteField();
-            updates.playerNames = deleteField();
-            updates.uidByGameId = deleteField();
-            updates.game = deleteField();
-          }
-
-          await updateDoc(roomRef, updates);
-        } catch (e) {
-          console.error('플레이어 퇴장 처리 실패:', e);
-        }
-      };
-
-      function startHeartbeat(code) {
-        if (heartbeatInterval) clearInterval(heartbeatInterval);
-        const send = () => {
-          if (!currentRoomCode || !playerId) return;
-          updateDoc(doc(db, 'rooms', code), { [`players.${playerId}.lastSeen`]: Date.now() }).catch(() => { });
-        };
-        send();
-        heartbeatInterval = setInterval(send, HEARTBEAT_MS);
-      }
-
-      function stopHeartbeat() {
-        if (heartbeatInterval) clearInterval(heartbeatInterval);
-        heartbeatInterval = null;
-      }
-
-      // 탭을 닫거나 새로고침할 때 최선을 다해 방에서 제거 시도 (100% 보장은 아님 - AFK 감지가 진짜 안전망)
-      window.addEventListener('beforeunload', () => {
-        if (currentRoomCode && playerId) {
-          try { window.handlePlayerDeparture(playerId); } catch (e) { }
-        }
-      });
-
-      window.handleLeaveRoom = async function () {
-        if (currentRoomCode && playerId) {
-          await window.handlePlayerDeparture(playerId);
-        }
-        stopHeartbeat();
-        if (unsubscribeRoom) unsubscribeRoom();
-        if (unsubscribeMyHand) unsubscribeMyHand();
-        currentRoomCode = null;
-        document.getElementById('waitingScreen').style.display = 'none';
-        document.getElementById('lobbyScreen').style.display = 'block';
-      };
-
-      function enterWaitingRoom(code) {
-        currentRoomCode = code;
+      // 미리보기 모드면 로비를 건너뛰고 바로 게임 화면 + 랜덤 카드로 시작
+      if (window.isPreviewMode) {
         document.getElementById('lobbyScreen').style.display = 'none';
-        document.getElementById('waitingScreen').style.display = 'block';
-        document.getElementById('roomCodeDisplay').textContent = code;
+        document.getElementById('waitingScreen').style.display = 'none';
+        document.getElementById('gameScreen').style.display = 'block';
+        window.isMultiplayerGame = false;
+        window.myGameId = null;
+        dealAndRender();
+      }
+    </script>
+  </div>
 
-        const roomRef = doc(db, 'rooms', code);
-        window.fsUpdateDoc = updateDoc; // logic/게임 스크립트에서 상태 저장할 때 씀
-        subscribeMyHand(code);
-        startHeartbeat(code); // 대기실~게임 내내 계속 보냄 (게임 중 이탈 감지에도 씀)
-        let gameScreenShown = false;
-        let kickHandled = false;
+  <script type="module">
+    import { db, ensureSignedIn } from "./firebase-config.js";
+    import {
+      doc, setDoc, getDoc, updateDoc, onSnapshot, serverTimestamp, deleteField,
+      collection, query, where, getDocs, deleteDoc
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-        unsubscribeRoom = onSnapshot(roomRef, (snap) => {
-          if (!snap.exists()) return;
-          const data = snap.data();
-          const allPlayers = data.players || {};
+    let playerId = null; // 익명 로그인 후 uid로 채워짐
+    let currentRoomCode = null;
+    let unsubscribeRoom = null;
+    let afkCheckInterval = null;
+    let unsubscribeMyHand = null;
+    let isHost = false;
 
-          // 내가 players 목록에서 사라졌다면(방장이 강퇴함) 자동으로 로비로 돌아감
-          if (!kickHandled && !allPlayers[playerId]) {
-            kickHandled = true;
-            stopHeartbeat();
-            if (unsubscribeRoom) unsubscribeRoom();
-            if (unsubscribeMyHand) unsubscribeMyHand();
-            currentRoomCode = null;
-            document.getElementById('waitingScreen').style.display = 'none';
-            document.getElementById('gameScreen').style.display = 'none';
-            document.getElementById('lobbyScreen').style.display = 'block';
-            showLobbyError('방장에 의해 강퇴되었어요');
-            return;
-          }
+    const readyPromise = ensureSignedIn().then(user => {
+      playerId = user.uid;
+      cleanupStaleRooms(); // 로그인 직후, 30분 넘은 대기중 방들을 한 번 정리
+    });
 
-          renderWaitingPlayers(allPlayers);
-          window.roomMode = data.roomMode || 'custom';
-          window.roomPlayers = allPlayers; // 게임 화면(이탈 감지 등)에서도 참조
-
-          // 방장이 나가서 위임됐을 수도 있으니 매번 최신 상태로 맞춤
-          isHost = (data.hostId === playerId);
-          window.isHost = isHost;
-
-          const startBtn = document.getElementById('startGameBtn');
-          const count = Object.keys(allPlayers).length;
-          startBtn.disabled = !(isHost && count === 5);
-          startBtn.textContent = isHost
-            ? (count === 5 ? '게임 시작' : `게임 시작 (${count}/5명)`)
-            : `호스트가 시작하기를 기다리는 중... (${count}/5명)`;
-
-          const round1ModeBox = document.getElementById('round1ModeBox');
-          if (round1ModeBox) round1ModeBox.style.display = (isHost && window.roomMode === 'custom') ? 'block' : 'none';
-
-          if (data.status === 'playing') {
-            if (!gameScreenShown) {
-              gameScreenShown = true;
-              document.getElementById('waitingScreen').style.display = 'none';
-              document.getElementById('gameScreen').style.display = 'block';
-
-              window.isMultiplayerGame = true;
-              window.myGameId = (data.idByPlayer || {})[playerId];
-              window.playerNames = data.playerNames || [];
-              window.uidByGameId = data.uidByGameId || [];
-              window.roomRef = roomRef;
-
-              const dealBtn = document.getElementById('dealBtn');
-              if (dealBtn) dealBtn.style.display = 'none'; // 멀티플레이 중엔 랜덤 재분배 버튼 숨김
-
-              // 게임 중엔 접속해 있는 누구나 주기적으로 AFK(무응답) 여부를 체크
-              if (afkCheckInterval) clearInterval(afkCheckInterval);
-              afkCheckInterval = setInterval(() => window.checkAfkPlayers && window.checkAfkPlayers(), 10000);
-            }
-            if (data.playerNames) window.playerNames = data.playerNames;
-            if (data.uidByGameId) window.uidByGameId = data.uidByGameId;
-            window.checkAfkPlayers && window.checkAfkPlayers();
-            if (data.game) window.loadGameState(data.game);
-          } else if (data.status === 'waiting' && gameScreenShown) {
-            // 게임 중이었는데 누군가 나가서(강퇴/AFK) 중단되고 대기실로 돌아온 경우
-            gameScreenShown = false;
-            window.isMultiplayerGame = false;
-            window.myGameId = null;
-            if (afkCheckInterval) { clearInterval(afkCheckInterval); afkCheckInterval = null; }
-            document.getElementById('gameScreen').style.display = 'none';
-            document.getElementById('waitingScreen').style.display = 'block';
+    // 결제(빌링) 없이 오래된 방을 지우는 방법 - Firestore TTL은 유료 요금제가 필요해서,
+    // 대신 누군가 로비에 접속할 때마다 "30분 넘게 대기중인 방"을 찾아서 지움
+    async function cleanupStaleRooms() {
+      try {
+        const q = query(collection(db, 'rooms'), where('status', '==', 'waiting'));
+        const snap = await getDocs(q);
+        const cutoff = Date.now() - 30 * 60 * 1000;
+        const deletions = [];
+        snap.forEach(docSnap => {
+          const data = docSnap.data();
+          const createdMs = data.createdAt && data.createdAt.toMillis ? data.createdAt.toMillis() : null;
+          if (createdMs !== null && createdMs < cutoff) {
+            deletions.push(deleteDoc(docSnap.ref));
           }
         });
+        if (deletions.length) await Promise.all(deletions);
+      } catch (err) {
+        console.error('오래된 방 정리 중 오류(무시 가능):', err);
       }
+    }
 
-      window.handleKickPlayer = async function (uid) {
-        if (!isHost || !currentRoomCode) return;
-        await window.handlePlayerDeparture(uid);
-      };
+    function generateRoomCode() {
+      return String(Math.floor(1000 + Math.random() * 9000)); // 4자리
+    }
 
-      function renderWaitingPlayers(players) {
-        const box = document.getElementById('waitingPlayers');
-        box.innerHTML = Object.entries(players)
-          .sort((a, b) => a[1].joinedAt - b[1].joinedAt)
-          .map(([uid, p]) => {
-            const kickBtn = (isHost && uid !== playerId)
-              ? `<button onclick="handleKickPlayer('${uid}')" style="float:right;background:#e05d5d;color:white;font-size:11px;padding:3px 8px;border-radius:10px;">강퇴</button>`
-              : '';
-            return `<div class="p-row">${p.name}${p.isHost ? '<span class="host-tag">방장</span>' : ''}${kickBtn}</div>`;
-          })
-          .join('');
+    function withTimeout(promise, ms, label) {
+      return Promise.race([
+        promise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error(`${label} 응답이 ${ms / 1000}초 동안 없어요 (네트워크 연결 문제로 보여요)`)), ms)),
+      ]);
+    }
+
+    window.handleCreateRoom = async function () {
+      await readyPromise;
+      const name = document.getElementById('createNameInput').value.trim().slice(0, 10);
+      if (!name) return showLobbyError('닉네임을 입력해주세요');
+
+      showLobbyError('방 만드는 중...');
+      try {
+        const selectedModeInput = document.querySelector('input[name="roomMode"]:checked');
+        const roomMode = selectedModeInput ? selectedModeInput.value : 'custom';
+        const code = generateRoomCode();
+        const roomRef = doc(db, 'rooms', code);
+        await withTimeout(setDoc(roomRef, {
+          hostId: playerId,
+          status: 'waiting',
+          roomMode,
+          createdAt: serverTimestamp(),
+          expiresAt: new Date(Date.now() + 30 * 60 * 1000), // 30분 안에 게임 시작 안 하면 TTL로 자동 삭제
+          players: {
+            [playerId]: { name, isHost: true, joinedAt: Date.now(), lastSeen: Date.now() }
+          }
+        }), 8000, '방 생성');
+        isHost = true;
+        showLobbyError('');
+        enterWaitingRoom(code);
+      } catch (err) {
+        console.error('방 생성 실패:', err);
+        showLobbyError('방 생성 실패: ' + err.message);
       }
+    };
 
-      window.handleStartGame = async function () {
-        if (!isHost || !currentRoomCode) return;
-        const roomRef = doc(db, 'rooms', currentRoomCode);
+    window.handleJoinRoom = async function () {
+      await readyPromise;
+      const code = document.getElementById('joinCodeInput').value.trim();
+      const name = document.getElementById('joinNameInput').value.trim().slice(0, 10);
+      if (!code || code.length !== 4) return showLobbyError('4자리 방 코드를 입력해주세요');
+      if (!name) return showLobbyError('닉네임을 입력해주세요');
+
+      showLobbyError('입장하는 중...');
+      try {
+        const roomRef = doc(db, 'rooms', code);
+        const snap = await getDoc(roomRef);
+        if (!snap.exists()) return showLobbyError('존재하지 않는 방 코드예요');
+
+        const data = snap.data();
+        const playerCount = Object.keys(data.players || {}).length;
+        if (playerCount >= 5) return showLobbyError('이미 5명이 꽉 찬 방이에요');
+        if (data.status !== 'waiting') return showLobbyError('이미 시작된 게임이에요');
+
+        const nameTaken = Object.values(data.players || {})
+          .some(p => p.name.trim().toLowerCase() === name.toLowerCase());
+        if (nameTaken) return showLobbyError('이미 이 방에서 쓰이고 있는 닉네임이에요');
+
+        await updateDoc(roomRef, {
+          [`players.${playerId}`]: { name, isHost: false, joinedAt: Date.now(), lastSeen: Date.now() }
+        });
+        isHost = false;
+        showLobbyError('');
+        enterWaitingRoom(code);
+      } catch (err) {
+        console.error('입장 실패:', err);
+        showLobbyError('입장 실패: ' + err.message);
+      }
+    };
+
+    function showLobbyError(msg) {
+      document.getElementById('lobbyError').textContent = msg;
+    }
+
+    // 내 손패(비공개 문서)를 구독 - 방장이 딜하면 이걸 통해서만 내 카드를 받아옴
+    function subscribeMyHand(code) {
+      if (unsubscribeMyHand) unsubscribeMyHand();
+      const handRef = doc(db, 'rooms', code, 'hands', playerId);
+      unsubscribeMyHand = onSnapshot(handRef, (snap) => {
+        if (!snap.exists()) return;
+        window.setMyHand(snap.data().hand || []);
+      });
+    }
+
+    // 게임 스크립트(카드 로직)가 손패를 쓸 때 호출하는 통로
+    window.writePrivateHand = async function (uid, hand) {
+      await setDoc(doc(db, 'rooms', currentRoomCode, 'hands', uid), { hand });
+    };
+
+    const HEARTBEAT_MS = 8000;
+    let heartbeatInterval = null;
+
+    // 누군가(강퇴/직접 나가기/AFK 감지) 방을 떠날 때 공통으로 쓰는 처리
+    // - players 목록에서 제거
+    // - 나간 사람이 방장이면 남아있는 사람 중 가장 먼저 들어온 사람에게 방장 자동 위임
+    // - 게임이 진행 중이었다면(5인 고정 구조라 한 명 빠지면 이어갈 수 없음) 중단하고 대기실로 되돌림
+    window.handlePlayerDeparture = async function (uid) {
+      if (!currentRoomCode || !uid) return;
+      const roomRef = doc(db, 'rooms', currentRoomCode);
+      try {
         const snap = await getDoc(roomRef);
         if (!snap.exists()) return;
         const data = snap.data();
+        const players = { ...(data.players || {}) };
+        if (!players[uid]) return; // 이미 처리됨 (중복 호출 방지)
+        delete players[uid];
 
-        // 참가 순서(joinedAt) 기준으로 플레이어 1~5 자리 배정
-        const idByPlayer = {};
-        const playerNames = [];
-        const uidByGameId = [];
-        Object.entries(data.players || {})
-          .sort((a, b) => a[1].joinedAt - b[1].joinedAt)
-          .forEach(([pid, info], idx) => {
-            idByPlayer[pid] = idx;
-            playerNames[idx] = info.name;
-            uidByGameId[idx] = pid;
-          });
+        const updates = { [`players.${uid}`]: deleteField() };
 
-        const deck = window.createDeck();
-        const hands = window.dealHands(deck, 5);
-
-        // 각자 손패는 비공개 문서에 따로 저장 (공개 데이터엔 낸 카드만 실림)
-        await Promise.all(hands.map((hand, i) =>
-          setDoc(doc(db, 'rooms', currentRoomCode, 'hands', uidByGameId[i]), { hand })
-        ));
-
-        const plays = hands.map((hand, i) => ({
-          id: i,
-          played: window.isForcedPlay(hand) ? [hand[0], hand[1]] : [],
-        }));
-
-        // 첫 라운드 모드 결정: 랜덤 모드 방이면 확률 추첨, 커스텀 모드 방이면 대기실에서 고른 값
-        const roomMode = data.roomMode || 'custom';
-        let round1Mode;
-        if (roomMode === 'random') {
-          round1Mode = window.weightedPickMode();
-        } else {
-          const sel = document.getElementById('round1ModeSelect');
-          round1Mode = sel ? sel.value : 'normal';
+        if (data.hostId === uid) {
+          const remaining = Object.entries(players).sort((a, b) => a[1].joinedAt - b[1].joinedAt);
+          if (remaining.length > 0) {
+            const [newHostUid] = remaining[0];
+            updates.hostId = newHostUid;
+            updates[`players.${newHostUid}.isHost`] = true;
+          }
         }
-        const reveal = window.computeModeReveal(round1Mode, hands);
 
-        await updateDoc(roomRef, {
-          status: 'playing',
-          idByPlayer,
-          playerNames,
-          uidByGameId,
-          expiresAt: deleteField(), // 게임이 시작됐으니 30분 만료 타이머는 해제 (진행 중에 삭제되면 안 되니까)
-          game: {
-            plays, extraCardsUsed: [], replayPair: null, roundNumber: 1,
-            scores: { 0: 200, 1: 200, 2: 200, 3: 200, 4: 200 }, scored: false, dealtAt: Date.now(),
-            roundMode: reveal.roundMode, randomReveal: reveal.randomReveal, gwangCountRevealed: reveal.gwangCountRevealed,
-          },
-        });
+        if (data.status === 'playing') {
+          updates.status = 'waiting';
+          updates.idByPlayer = deleteField();
+          updates.playerNames = deleteField();
+          updates.uidByGameId = deleteField();
+          updates.game = deleteField();
+        }
+
+        await updateDoc(roomRef, updates);
+      } catch (e) {
+        console.error('플레이어 퇴장 처리 실패:', e);
+      }
+    };
+
+    function startHeartbeat(code) {
+      if (heartbeatInterval) clearInterval(heartbeatInterval);
+      const send = () => {
+        if (!currentRoomCode || !playerId) return;
+        updateDoc(doc(db, 'rooms', code), { [`players.${playerId}.lastSeen`]: Date.now() }).catch(() => { });
       };
-    </script>
+      send();
+      heartbeatInterval = setInterval(send, HEARTBEAT_MS);
+    }
+
+    function stopHeartbeat() {
+      if (heartbeatInterval) clearInterval(heartbeatInterval);
+      heartbeatInterval = null;
+    }
+
+    // 탭을 닫거나 새로고침할 때 최선을 다해 방에서 제거 시도 (100% 보장은 아님 - AFK 감지가 진짜 안전망)
+    window.addEventListener('beforeunload', () => {
+      if (currentRoomCode && playerId) {
+        try { window.handlePlayerDeparture(playerId); } catch (e) { }
+      }
+    });
+
+    window.handleLeaveRoom = async function () {
+      if (currentRoomCode && playerId) {
+        await window.handlePlayerDeparture(playerId);
+      }
+      stopHeartbeat();
+      if (unsubscribeRoom) unsubscribeRoom();
+      if (unsubscribeMyHand) unsubscribeMyHand();
+      currentRoomCode = null;
+      document.getElementById('waitingScreen').style.display = 'none';
+      document.getElementById('lobbyScreen').style.display = 'block';
+    };
+
+    function enterWaitingRoom(code) {
+      currentRoomCode = code;
+      document.getElementById('lobbyScreen').style.display = 'none';
+      document.getElementById('waitingScreen').style.display = 'block';
+      document.getElementById('roomCodeDisplay').textContent = code;
+
+      const roomRef = doc(db, 'rooms', code);
+      window.fsUpdateDoc = updateDoc; // logic/게임 스크립트에서 상태 저장할 때 씀
+      subscribeMyHand(code);
+      startHeartbeat(code); // 대기실~게임 내내 계속 보냄 (게임 중 이탈 감지에도 씀)
+      let gameScreenShown = false;
+      let kickHandled = false;
+
+      unsubscribeRoom = onSnapshot(roomRef, (snap) => {
+        if (!snap.exists()) return;
+        const data = snap.data();
+        const allPlayers = data.players || {};
+
+        // 내가 players 목록에서 사라졌다면(방장이 강퇴함) 자동으로 로비로 돌아감
+        if (!kickHandled && !allPlayers[playerId]) {
+          kickHandled = true;
+          stopHeartbeat();
+          if (unsubscribeRoom) unsubscribeRoom();
+          if (unsubscribeMyHand) unsubscribeMyHand();
+          currentRoomCode = null;
+          document.getElementById('waitingScreen').style.display = 'none';
+          document.getElementById('gameScreen').style.display = 'none';
+          document.getElementById('lobbyScreen').style.display = 'block';
+          showLobbyError('방장에 의해 강퇴되었어요');
+          return;
+        }
+
+        renderWaitingPlayers(allPlayers);
+        window.roomMode = data.roomMode || 'custom';
+        window.roomPlayers = allPlayers; // 게임 화면(이탈 감지 등)에서도 참조
+
+        // 방장이 나가서 위임됐을 수도 있으니 매번 최신 상태로 맞춤
+        isHost = (data.hostId === playerId);
+        window.isHost = isHost;
+
+        const startBtn = document.getElementById('startGameBtn');
+        const count = Object.keys(allPlayers).length;
+        startBtn.disabled = !(isHost && count === 5);
+        startBtn.textContent = isHost
+          ? (count === 5 ? '게임 시작' : `게임 시작 (${count}/5명)`)
+          : `호스트가 시작하기를 기다리는 중... (${count}/5명)`;
+
+        const round1ModeBox = document.getElementById('round1ModeBox');
+        if (round1ModeBox) round1ModeBox.style.display = (isHost && window.roomMode === 'custom') ? 'block' : 'none';
+
+        if (data.status === 'playing') {
+          if (!gameScreenShown) {
+            gameScreenShown = true;
+            document.getElementById('waitingScreen').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'block';
+
+            window.isMultiplayerGame = true;
+            window.myGameId = (data.idByPlayer || {})[playerId];
+            window.playerNames = data.playerNames || [];
+            window.uidByGameId = data.uidByGameId || [];
+            window.roomRef = roomRef;
+
+            const dealBtn = document.getElementById('dealBtn');
+            if (dealBtn) dealBtn.style.display = 'none'; // 멀티플레이 중엔 랜덤 재분배 버튼 숨김
+
+            // 게임 중엔 접속해 있는 누구나 주기적으로 AFK(무응답) 여부를 체크
+            if (afkCheckInterval) clearInterval(afkCheckInterval);
+            afkCheckInterval = setInterval(() => window.checkAfkPlayers && window.checkAfkPlayers(), 10000);
+          }
+          if (data.playerNames) window.playerNames = data.playerNames;
+          if (data.uidByGameId) window.uidByGameId = data.uidByGameId;
+          window.checkAfkPlayers && window.checkAfkPlayers();
+          if (data.game) window.loadGameState(data.game);
+        } else if (data.status === 'waiting' && gameScreenShown) {
+          // 게임 중이었는데 누군가 나가서(강퇴/AFK) 중단되고 대기실로 돌아온 경우
+          gameScreenShown = false;
+          window.isMultiplayerGame = false;
+          window.myGameId = null;
+          if (afkCheckInterval) { clearInterval(afkCheckInterval); afkCheckInterval = null; }
+          document.getElementById('gameScreen').style.display = 'none';
+          document.getElementById('waitingScreen').style.display = 'block';
+        }
+      });
+    }
+
+    window.handleKickPlayer = async function (uid) {
+      if (!isHost || !currentRoomCode) return;
+      await window.handlePlayerDeparture(uid);
+    };
+
+    function renderWaitingPlayers(players) {
+      const box = document.getElementById('waitingPlayers');
+      box.innerHTML = Object.entries(players)
+        .sort((a, b) => a[1].joinedAt - b[1].joinedAt)
+        .map(([uid, p]) => {
+          const kickBtn = (isHost && uid !== playerId)
+            ? `<button onclick="handleKickPlayer('${uid}')" style="float:right;background:#e05d5d;color:white;font-size:11px;padding:3px 8px;border-radius:10px;">강퇴</button>`
+            : '';
+          return `<div class="p-row">${p.name}${p.isHost ? '<span class="host-tag">방장</span>' : ''}${kickBtn}</div>`;
+        })
+        .join('');
+    }
+
+    window.handleStartGame = async function () {
+      if (!isHost || !currentRoomCode) return;
+      const roomRef = doc(db, 'rooms', currentRoomCode);
+      const snap = await getDoc(roomRef);
+      if (!snap.exists()) return;
+      const data = snap.data();
+
+      // 참가 순서(joinedAt) 기준으로 플레이어 1~5 자리 배정
+      const idByPlayer = {};
+      const playerNames = [];
+      const uidByGameId = [];
+      Object.entries(data.players || {})
+        .sort((a, b) => a[1].joinedAt - b[1].joinedAt)
+        .forEach(([pid, info], idx) => {
+          idByPlayer[pid] = idx;
+          playerNames[idx] = info.name;
+          uidByGameId[idx] = pid;
+        });
+
+      const deck = window.createDeck();
+      const hands = window.dealHands(deck, 5);
+
+      // 각자 손패는 비공개 문서에 따로 저장 (공개 데이터엔 낸 카드만 실림)
+      await Promise.all(hands.map((hand, i) =>
+        setDoc(doc(db, 'rooms', currentRoomCode, 'hands', uidByGameId[i]), { hand })
+      ));
+
+      const plays = hands.map((hand, i) => ({
+        id: i,
+        played: window.isForcedPlay(hand) ? [hand[0], hand[1]] : [],
+      }));
+
+      // 첫 라운드 모드 결정: 랜덤 모드 방이면 확률 추첨, 커스텀 모드 방이면 대기실에서 고른 값
+      const roomMode = data.roomMode || 'custom';
+      let round1Mode;
+      if (roomMode === 'random') {
+        round1Mode = window.weightedPickMode();
+      } else {
+        const sel = document.getElementById('round1ModeSelect');
+        round1Mode = sel ? sel.value : 'normal';
+      }
+      const reveal = window.computeModeReveal(round1Mode, hands);
+
+      await updateDoc(roomRef, {
+        status: 'playing',
+        idByPlayer,
+        playerNames,
+        uidByGameId,
+        expiresAt: deleteField(), // 게임이 시작됐으니 30분 만료 타이머는 해제 (진행 중에 삭제되면 안 되니까)
+        game: {
+          plays, extraCardsUsed: [], replayPair: null, roundNumber: 1,
+          scores: { 0: 200, 1: 200, 2: 200, 3: 200, 4: 200 }, scored: false, dealtAt: Date.now(),
+          roundMode: reveal.roundMode, randomReveal: reveal.randomReveal, gwangCountRevealed: reveal.gwangCountRevealed,
+        },
+      });
+    };
+  </script>
 </body>
 
 </html>
