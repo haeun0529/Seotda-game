@@ -10,8 +10,17 @@ body {
   min-height: 100vh;
   box-sizing: border-box;
 }
-h1 { margin-bottom: 10px; }
-.sub { color: #a8c9b8; margin-bottom: 30px; font-size: 14px; }
+
+h1 {
+  margin-bottom: 10px;
+}
+
+.sub {
+  color: #a8c9b8;
+  margin-bottom: 30px;
+  font-size: 14px;
+}
+
 button {
   padding: 10px 22px;
   font-size: 15px;
@@ -22,16 +31,34 @@ button {
   font-weight: bold;
   background: url('assets/images/Button_Normal.png') no-repeat center / 100% 100%;
 }
-.deal-btn { color: #5a3d1a; }
-.play-btn { font-size: 13px; padding: 6px 14px; color: #5a3d1a; }
+
+.deal-btn {
+  color: #5a3d1a;
+}
+
+.play-btn {
+  font-size: 13px;
+  padding: 6px 14px;
+  color: #5a3d1a;
+}
+
 .play-btn:disabled {
   background-image: url('assets/images/Button_Selected.png');
   color: #4a2f10;
   cursor: not-allowed;
   opacity: 1;
 }
-.judge-btn { color: white; background-image: none; background-color: #e05d5d; border-radius: 8px; }
-.players { position: static; }
+
+.judge-btn {
+  color: white;
+  background-image: none;
+  background-color: #e05d5d;
+  border-radius: 8px;
+}
+
+.players {
+  position: static;
+}
 
 #gameTable {
   position: relative;
@@ -47,12 +74,33 @@ button {
   background: none;
   box-sizing: border-box;
 }
+
 /* 화면(뷰포트) 전체에 깔린 공용 배경(Main_BG) 기준 5자리 좌표 - 상단 좌/우, 중단 좌/우, 하단 중앙 */
-.player-1 { left: 24%; top: 20%; }
-.player-2 { left: 61%; top: 20%; }
-.player-3 { left: 17%; top: 50%; }
-.player-4 { left: 65%; top: 50%; }
-.player-5 { left: 50%; top: 76%; transform: translateX(-50%); }
+.player-1 {
+  left: 24%;
+  top: 20%;
+}
+
+.player-2 {
+  left: 61%;
+  top: 20%;
+}
+
+.player-3 {
+  left: 17%;
+  top: 50%;
+}
+
+.player-4 {
+  left: 65%;
+  top: 50%;
+}
+
+.player-5 {
+  left: 50%;
+  top: 76%;
+  transform: translateX(-50%);
+}
 
 /* 이름표 - 모든 플레이어 동일한 크기 박스 + 이미지는 비율 유지(contain) */
 .player h3 {
@@ -60,8 +108,10 @@ button {
   align-items: center;
   justify-content: center;
   width: 100%;
-  aspect-ratio: 2 / 1;          /* 가로:세로 = 2:1 (일반 이미지 비율 약 1.9~2.0에 맞춤) */
-  max-height: 80px;             /* 큰 화면에서 너무 커지지 않게 */
+  aspect-ratio: 2 / 1;
+  /* 가로:세로 = 2:1 (일반 이미지 비율 약 1.9~2.0에 맞춤) */
+  max-height: 80px;
+  /* 큰 화면에서 너무 커지지 않게 */
   margin: 0 auto 10px;
   padding: 0;
   box-sizing: border-box;
@@ -72,77 +122,364 @@ button {
   overflow: hidden;
   background-repeat: no-repeat;
   background-position: center;
-  background-size: contain;     /* 늘리지 않고 박스 안에 비율 유지로 맞춤 */
+  background-size: contain;
+  /* 늘리지 않고 박스 안에 비율 유지로 맞춤 */
 }
-.player-1 h3 { background-image: url('assets/images/Player_01.png'); }
-.player-2 h3 { background-image: url('assets/images/Player_02.png'); }
-.player-3 h3 { background-image: url('assets/images/Player_03.png'); }
-.player-4 h3 { background-image: url('assets/images/Player_04.png'); }
-.player-5 h3 { background-image: url('assets/images/Player_05.png'); }
 
-.player-1 h3 { padding-right: 26px; }
-.player-2 h3 { padding-right: 34px; }
-.player-3 h3 { padding-right: 30px; }
-.player-4 h3 { padding-right: 24px; }
-.player-5 h3 { padding-right: 28px; }
+.player-1 h3 {
+  background-image: url('assets/images/Player_01.png');
+}
+
+.player-2 h3 {
+  background-image: url('assets/images/Player_02.png');
+}
+
+.player-3 h3 {
+  background-image: url('assets/images/Player_03.png');
+}
+
+.player-4 h3 {
+  background-image: url('assets/images/Player_04.png');
+}
+
+.player-5 h3 {
+  background-image: url('assets/images/Player_05.png');
+}
+
+.player-1 h3 {
+  padding-right: 26px;
+}
+
+.player-2 h3 {
+  padding-right: 34px;
+}
+
+.player-3 h3 {
+  padding-right: 30px;
+}
+
+.player-4 h3 {
+  padding-right: 24px;
+}
+
+.player-5 h3 {
+  padding-right: 28px;
+}
 
 /* 우승 이름표 - 박스 크기는 그대로, 그림만 살짝 키워서 강조 (레이아웃이 밀리지 않음) */
-.player.winner h3 { transform: scale(1.1); overflow: visible; }
-.player.winner.player-1 h3 { background-image: url('assets/images/Player_01_Win.png'); }
-.player.winner.player-2 h3 { background-image: url('assets/images/Player_02_Win.png'); }
-.player.winner.player-3 h3 { background-image: url('assets/images/Player_03_Win.png'); }
-.player.winner.player-4 h3 { background-image: url('assets/images/Player_04_Win.png'); }
-.player.winner.player-5 h3 { background-image: url('assets/images/Player_05_Win.png'); }
-.player.winner { outline: none; }
-.player.duel-loser { opacity: 0.45; }
-.card { display: inline-block; width: 40px; height: 56px; line-height: 56px; margin: 4px; border-radius: 6px; font-weight: bold; }
-.card.normal { background: #fff; color: #222; }
-.card.gwang { background: #f2c94c; color: #7a3e00; }
-.card.back { background: repeating-linear-gradient(45deg, #1b3a2b, #1b3a2b 4px, #234a37 4px, #234a37 8px); color: #5a7a68; border: 1px solid #3a6650; }
-.score-chip { display: inline-block; background: #234a37; border-radius: 20px; padding: 6px 14px; margin: 0 4px 10px; font-size: 13px; color: #f2c94c; font-weight: bold; }
-.card.played { outline: 3px solid #4c8bf2; }
-.status { font-size: 12px; color: #fff2d0; margin-top: 6px; text-shadow: 1px 1px 2px #000; }
-#result { font-size: 18px; margin-top: 20px; color: #fff2d0; font-weight: bold; text-shadow: 1px 1px 2px #000; }
+.player.winner h3 {
+  transform: scale(1.1);
+  overflow: visible;
+}
 
-#duelSpotlight { display: none; background: #3a2412; border: 2px solid #f2c94c; border-radius: 14px; padding: 24px; margin: 0 auto 30px; max-width: 600px; }
-#duelSpotlight h2 { margin: 0 0 16px; color: #f2c94c; font-size: 16px; letter-spacing: 1px; }
-.duel-vs { display: flex; align-items: center; justify-content: center; gap: 24px; }
-.duel-side { text-align: center; }
-.duel-side .name { font-size: 13px; color: #f2c94c; margin-bottom: 6px; }
-.duel-side .card { width: 52px; height: 72px; line-height: 72px; font-size: 18px; }
-.duel-side .combo { font-size: 12px; color: #a8c9b8; margin-top: 6px; }
-.duel-side.win .combo { color: #f2c94c; font-weight: bold; }
-.duel-x { font-size: 22px; color: #a8c9b8; }
-.replay-box { background: #4a1f1f; border: 2px solid #e05d5d; }
-.replay-btn { background: #e05d5d; color: white; margin-top: 16px; }
-.custom-btn { background: #7a5cf2; color: white; }
-#customForm { display: none; background: #234a37; border-radius: 12px; padding: 20px; margin: 0 auto 30px; max-width: 900px; }
-#customForm h2 { margin: 0 0 16px; font-size: 15px; color: #f2c94c; }
-.custom-row { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
-.custom-row .label { width: 70px; font-size: 13px; color: #a8c9b8; text-align: right; }
-.custom-row select { padding: 4px 6px; border-radius: 4px; border: none; }
-.custom-row label.gwang-check { font-size: 12px; color: #f2c94c; display: flex; align-items: center; gap: 3px; }
-#customForm .apply-btn { background: #f2c94c; margin-top: 10px; }
+.player.winner.player-1 h3 {
+  background-image: url('assets/images/Player_01_Win.png');
+}
 
-#lobbyScreen { max-width: 480px; margin: 60px auto; }
-#lobbyScreen h1 { margin-bottom: 40px; }
-.lobby-box { background: #234a37; border-radius: 12px; padding: 24px; margin-bottom: 20px; }
-.lobby-box h2 { font-size: 15px; color: #f2c94c; margin: 0 0 14px; }
-.lobby-box input { padding: 10px; font-size: 15px; border-radius: 6px; border: none; width: 100%; box-sizing: border-box; margin-bottom: 10px; text-align: center; }
-.lobby-box button { width: 100%; background: #f2c94c; }
-.join-box button { background: #4c8bf2; color: white; }
-#lobbyError { color: #e05d5d; font-size: 13px; margin-top: 8px; min-height: 18px; }
+.player.winner.player-2 h3 {
+  background-image: url('assets/images/Player_02_Win.png');
+}
 
-#waitingScreen { display: none; max-width: 480px; margin: 60px auto; }
-#waitingScreen .room-code { font-size: 32px; letter-spacing: 6px; color: #f2c94c; font-weight: bold; margin: 10px 0 24px; }
-#waitingPlayers { text-align: left; background: #234a37; border-radius: 12px; padding: 16px; margin-bottom: 20px; }
-#waitingPlayers .p-row { padding: 8px 4px; border-bottom: 1px solid #2f5b45; font-size: 14px; }
-#waitingPlayers .p-row:last-child { border-bottom: none; }
-#waitingPlayers .p-row .host-tag { color: #f2c94c; font-size: 11px; margin-left: 6px; }
-#startGameBtn { background: #f2c94c; width: 100%; }
-#startGameBtn:disabled { background: #555; cursor: not-allowed; }
+.player.winner.player-3 h3 {
+  background-image: url('assets/images/Player_03_Win.png');
+}
 
-#gameScreen { display: none; }
+.player.winner.player-4 h3 {
+  background-image: url('assets/images/Player_04_Win.png');
+}
+
+.player.winner.player-5 h3 {
+  background-image: url('assets/images/Player_05_Win.png');
+}
+
+.player.winner {
+  outline: none;
+}
+
+.player.duel-loser {
+  opacity: 0.45;
+}
+
+.card {
+  display: inline-block;
+  width: 40px;
+  height: 56px;
+  line-height: 56px;
+  margin: 4px;
+  border-radius: 6px;
+  font-weight: bold;
+}
+
+.card.normal {
+  background: #fff;
+  color: #222;
+}
+
+.card.gwang {
+  background: #f2c94c;
+  color: #7a3e00;
+}
+
+.card.back {
+  background: repeating-linear-gradient(45deg, #1b3a2b, #1b3a2b 4px, #234a37 4px, #234a37 8px);
+  color: #5a7a68;
+  border: 1px solid #3a6650;
+}
+
+.score-chip {
+  display: inline-block;
+  background: #234a37;
+  border-radius: 20px;
+  padding: 6px 14px;
+  margin: 0 4px 10px;
+  font-size: 13px;
+  color: #f2c94c;
+  font-weight: bold;
+}
+
+.card.played {
+  outline: 3px solid #4c8bf2;
+}
+
+.status {
+  font-size: 12px;
+  color: #fff2d0;
+  margin-top: 6px;
+  text-shadow: 1px 1px 2px #000;
+}
+
+#result {
+  font-size: 18px;
+  margin-top: 20px;
+  color: #fff2d0;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px #000;
+}
+
+#duelSpotlight {
+  display: none;
+  background: #3a2412;
+  border: 2px solid #f2c94c;
+  border-radius: 14px;
+  padding: 24px;
+  margin: 0 auto 30px;
+  max-width: 600px;
+}
+
+#duelSpotlight h2 {
+  margin: 0 0 16px;
+  color: #f2c94c;
+  font-size: 16px;
+  letter-spacing: 1px;
+}
+
+.duel-vs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+}
+
+.duel-side {
+  text-align: center;
+}
+
+.duel-side .name {
+  font-size: 13px;
+  color: #f2c94c;
+  margin-bottom: 6px;
+}
+
+.duel-side .card {
+  width: 52px;
+  height: 72px;
+  line-height: 72px;
+  font-size: 18px;
+}
+
+.duel-side .combo {
+  font-size: 12px;
+  color: #a8c9b8;
+  margin-top: 6px;
+}
+
+.duel-side.win .combo {
+  color: #f2c94c;
+  font-weight: bold;
+}
+
+.duel-x {
+  font-size: 22px;
+  color: #a8c9b8;
+}
+
+.replay-box {
+  background: #4a1f1f;
+  border: 2px solid #e05d5d;
+}
+
+.replay-btn {
+  background: #e05d5d;
+  color: white;
+  margin-top: 16px;
+}
+
+.custom-btn {
+  background: #7a5cf2;
+  color: white;
+}
+
+#customForm {
+  display: none;
+  background: #234a37;
+  border-radius: 12px;
+  padding: 20px;
+  margin: 0 auto 30px;
+  max-width: 900px;
+}
+
+#customForm h2 {
+  margin: 0 0 16px;
+  font-size: 15px;
+  color: #f2c94c;
+}
+
+.custom-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.custom-row .label {
+  width: 70px;
+  font-size: 13px;
+  color: #a8c9b8;
+  text-align: right;
+}
+
+.custom-row select {
+  padding: 4px 6px;
+  border-radius: 4px;
+  border: none;
+}
+
+.custom-row label.gwang-check {
+  font-size: 12px;
+  color: #f2c94c;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+#customForm .apply-btn {
+  background: #f2c94c;
+  margin-top: 10px;
+}
+
+#lobbyScreen {
+  max-width: 480px;
+  margin: 60px auto;
+}
+
+#lobbyScreen h1 {
+  margin-bottom: 40px;
+}
+
+.lobby-box {
+  background: #234a37;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.lobby-box h2 {
+  font-size: 15px;
+  color: #f2c94c;
+  margin: 0 0 14px;
+}
+
+.lobby-box input {
+  padding: 10px;
+  font-size: 15px;
+  border-radius: 6px;
+  border: none;
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.lobby-box button {
+  width: 100%;
+  background: #f2c94c;
+}
+
+.join-box button {
+  background: #4c8bf2;
+  color: white;
+}
+
+#lobbyError {
+  color: #e05d5d;
+  font-size: 13px;
+  margin-top: 8px;
+  min-height: 18px;
+}
+
+#waitingScreen {
+  display: none;
+  max-width: 480px;
+  margin: 60px auto;
+}
+
+#waitingScreen .room-code {
+  font-size: 32px;
+  letter-spacing: 6px;
+  color: #f2c94c;
+  font-weight: bold;
+  margin: 10px 0 24px;
+}
+
+#waitingPlayers {
+  text-align: left;
+  background: #234a37;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+#waitingPlayers .p-row {
+  padding: 8px 4px;
+  border-bottom: 1px solid #2f5b45;
+  font-size: 14px;
+}
+
+#waitingPlayers .p-row:last-child {
+  border-bottom: none;
+}
+
+#waitingPlayers .p-row .host-tag {
+  color: #f2c94c;
+  font-size: 11px;
+  margin-left: 6px;
+}
+
+#startGameBtn {
+  background: #f2c94c;
+  width: 100%;
+}
+
+#startGameBtn:disabled {
+  background: #555;
+  cursor: not-allowed;
+}
+
+#gameScreen {
+  display: none;
+}
 
 /* ---- 라운드 배너 / 모드 배지 ---- */
 #roundModeBadge {
@@ -156,14 +493,19 @@ button {
   aspect-ratio: 323 / 186;
   background: url('assets/images/Mod_Main_BG.png') no-repeat center / 100% 100%;
   color: white;
-  font-size: 17px;            /* 22px → 17px (긴 이름 기준) */
+  font-size: 17px;
+  /* 22px → 17px (긴 이름 기준) */
   font-weight: bold;
-  padding: 0 50px;            /* 천 가장자리 여백 확보 (좌우 50px 안쪽에서만 글씨 배치) */
-  padding-top: 20px;          /* 천 위쪽 막대 때문에 글씨를 살짝 아래로 */
+  padding: 0 50px;
+  /* 천 가장자리 여백 확보 (좌우 50px 안쪽에서만 글씨 배치) */
+  padding-top: 20px;
+  /* 천 위쪽 막대 때문에 글씨를 살짝 아래로 */
   box-sizing: border-box;
-  white-space: nowrap;        /* 줄바꿈 방지 → 한 줄 유지 */
+  white-space: nowrap;
+  /* 줄바꿈 방지 → 한 줄 유지 */
   z-index: 10;
 }
+
 #roundLabel {
   display: inline-block;
   background: url('assets/images/Round_BG.png') no-repeat center / 100% 100%;
@@ -181,6 +523,7 @@ button {
   padding: 60px 20px 20px;
   box-sizing: border-box;
 }
+
 .mode-list-title {
   position: relative;
   top: -48px;
@@ -188,6 +531,7 @@ button {
   font-weight: bold;
   font-size: 13px;
 }
+
 .mode-list-row {
   display: flex;
   align-items: center;
@@ -195,8 +539,20 @@ button {
   padding: 6px 6px;
   margin-bottom: 6px;
 }
-.mode-list-name { color: #6b4f2a; font-size: 13px; font-weight: bold; }
-.mode-list-card .card { width: 30px; height: 42px; line-height: 42px; font-size: 12px; margin: 0; }
+
+.mode-list-name {
+  color: #6b4f2a;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.mode-list-card .card {
+  width: 30px;
+  height: 42px;
+  line-height: 42px;
+  font-size: 12px;
+  margin: 0;
+}
 
 /* ---- 광 갯수 공개 모드: 단순 안내 패널 ---- */
 .gwang-count-panel {
@@ -208,4 +564,32 @@ button {
   max-width: 400px;
   color: #f2c94c;
   font-weight: bold;
+}
+
+#helpOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+#helpPanel {
+  width: 90%;
+  max-width: 480px;
+  max-height: 80vh;
+  overflow-y: auto;
+  background: #f5e9c8;
+  color: #4a2f10;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+#helpPanel h2 {
+  margin: 0 0 12px;
+  font-size: 18px;
 }
