@@ -147,8 +147,8 @@ button {
 /* ---- 라운드 배너 / 모드 배지 ---- */
 #roundModeBadge {
   position: fixed;
-  top: 0%;
-  left: 0%;
+  top: 2%;
+  left: 2%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -156,10 +156,12 @@ button {
   aspect-ratio: 323 / 186;
   background: url('assets/images/Mod_Main_BG.png') no-repeat center / 100% 100%;
   color: white;
-  padding-top: 20px;
-  font-size: 40px;
+  font-size: 17px;            /* 22px → 17px (긴 이름 기준) */
   font-weight: bold;
+  padding: 0 50px;            /* 천 가장자리 여백 확보 (좌우 50px 안쪽에서만 글씨 배치) */
+  padding-top: 20px;          /* 천 위쪽 막대 때문에 글씨를 살짝 아래로 */
   box-sizing: border-box;
+  white-space: nowrap;        /* 줄바꿈 방지 → 한 줄 유지 */
   z-index: 10;
 }
 #roundLabel {
