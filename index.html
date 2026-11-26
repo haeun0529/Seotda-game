@@ -32,6 +32,7 @@
     <div id="lobbyError"></div>
 
     <button id="helpBtn" onclick="toggleHelp(true)">게임 설명</button>
+    <button id="tutorialBtn" onclick="startTutorial()">튜토리얼</button>
 
     <div id="helpOverlay" onclick="toggleHelp(false)">
       <div id="helpPanel" onclick="event.stopPropagation()">
@@ -532,6 +533,16 @@
       function toggleHelp(show) {
         document.getElementById('helpOverlay').style.display = show ? 'flex' : 'none';
       }
+
+      function startTutorial() {
+          document.getElementById('lobbyScreen').style.display = 'none';
+          document.getElementById('waitingScreen').style.display = 'none';
+          document.getElementById('gameScreen').style.display = 'block';
+          window.isMultiplayerGame = false;
+          window.isTutorial = true;
+          window.myGameId = null;
+          dealAndRender();
+        }
 
       function toggleCustomForm() {
         const box = document.getElementById('customForm');
