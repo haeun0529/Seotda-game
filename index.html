@@ -323,9 +323,13 @@
       // 화면에 그릴 손패: 모르는 카드는 뒷면(hidden) placeholder로 채움
       // revealPlayed가 false면, 남의 "낸 카드"조차 아직 안 보여줌 (다 같이 공개되기 전 단계)
       function getDisplayHand(p, revealPlayed) {
-        const isMe = !window.isMultiplayerGame || p.id === window.myGameId;
+        const isMe = (!window.isMultiplayerGame && !window.isTutorial) || p.id === window.myGameId;
         if (!isMe && !revealPlayed) {
           return [{ hidden: true }, { hidden: true }];
+        }
+        // 튜토리얼: 라운드가 끝나기 전까지 NPC의 안 낸 카드는 뒷면으로 가림
+        if (window.isTutorial && !isMe && !roundScored && p.played.length === 1) {
+          return [p.played[0], { hidden: true }];
         }
         const known = getEffectiveHandForLogic(p);
         if (known) return known;
@@ -434,9 +438,9 @@
 
       async function dealAndRender() {
         const deck = createDeck();
-        currentHands = dealHands(deck, 5);
+        currentHands = window.isTutorial ? getTutorialHands() : dealHands(deck, 5);
 
-        const chosenMode = getChosenRoundMode();
+        const chosenMode = window.isTutorial ? 'normal' : getChosenRoundMode();
         const reveal = window.computeModeReveal(chosenMode, currentHands);
         currentRoundMode = reveal.roundMode;
         randomReveal = reveal.randomReveal;
@@ -464,6 +468,7 @@
 
         replayPair = null;
         extraCardsUsed = [];
+        if (window.isTutorial) applyTutorialNpcPlays();
         dealtAt = Date.now(); // 이 시점부터 5명 모두 10초 카운트다운 시작
         initScoresIfNeeded(); // 이미 있는 점수는 그대로 두고, 없을 때만(방 첫 시작) 200점으로 채움
         roundScored = false; // 새 라운드니까 점수 반영 플래그 초기화
@@ -534,15 +539,43 @@
         document.getElementById('helpOverlay').style.display = show ? 'flex' : 'none';
       }
 
-      function startTutorial() {
-          document.getElementById('lobbyScreen').style.display = 'none';
-          document.getElementById('waitingScreen').style.display = 'none';
-          document.getElementById('gameScreen').style.display = 'block';
-          window.isMultiplayerGame = false;
-          window.isTutorial = true;
-          window.myGameId = null;
-          dealAndRender();
-        }
+      const TUTORIAL_ME = 4; // 내 자리 = 플레이어 5 (화면 아래 가운데)
+      const TUTORIAL_CHAPTERS = {
+        1: {
+          hands: [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]],
+          npcPlay: [2, 4, 6, 8],
+          guide: '카드를 하나 골라 낸 뒤 "결과 확인"을 눌러 보세요!',
+        },
+      };
+
+      function getTutorialHands() {
+        const ch = TUTORIAL_CHAPTERS[window.tutorialChapter];
+        return ch.hands.map(hand => hand.map(n => ({ number: n, isGwang: false })));
+      }
+
+      // NPC(플레이어 1~4)가 미리 카드를 내 둠
+      function applyTutorialNpcPlays() {
+        const ch = TUTORIAL_CHAPTERS[window.tutorialChapter];
+        ch.npcPlay.forEach((num, i) => {
+          const hand = currentHands[i];
+          if (!isForcedPlay(hand)) currentPlays[i].played = [hand.find(c => c.number === num)];
+        });
+      }
+
+      // 튜토리얼 시작: 로비를 숨기고 혼자 연습하는 게임 화면으로 이동 (Firebase/멀티플레이 안 씀)
+      function startTutorial(chapter = 1) {
+        document.getElementById('lobbyScreen').style.display = 'none';
+        document.getElementById('waitingScreen').style.display = 'none';
+        document.getElementById('gameScreen').style.display = 'block';
+        window.isMultiplayerGame = false;
+        window.isTutorial = true;
+        window.tutorialChapter = chapter;
+        window.myGameId = TUTORIAL_ME;
+        document.getElementById('roundLabel').textContent = `튜토리얼 ${chapter}장`;
+        dealAndRender();
+        document.getElementById('result').textContent = TUTORIAL_CHAPTERS[chapter].guide;
+      }
+
 
       function toggleCustomForm() {
         const box = document.getElementById('customForm');
@@ -659,7 +692,7 @@
           if (winnerIds.has(i)) div.classList.add('winner');
           if (dimIds.has(i)) div.classList.add('duel-loser');
 
-          const isMe = !window.isMultiplayerGame || play.id === window.myGameId;
+          const isMe = (!window.isMultiplayerGame && !window.isTutorial) || play.id === window.myGameId;
           const displayHand = getDisplayHand(play, revealPlayed);
           const isDdang = play.played.length === 2;
 
