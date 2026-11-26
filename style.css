@@ -600,3 +600,29 @@ button {
   margin: 0 6px 0 0;
   vertical-align: middle;
 }
+
+#tutorialOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+#tutorialPanel {
+  width: 90%;
+  max-width: 480px;
+  max-height: 80vh;
+  overflow-y: auto;
+  background: #f5e9c8;
+  color: #4a2f10;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  box-sizing: border-box;
+}
+#tutorialGreeting { font-size: 14px; line-height: 1.6; margin-bottom: 16px; }
+#tutorialTitle { margin: 0 0 14px; font-size: 18px; }
+#tutorialBody p { margin: 0 0 10px; font-size: 14px; line-height: 1.6; }
+#tutorialAction { margin: 16px 0 6px; font-size: 15px; font-weight: bold; }

@@ -95,6 +95,16 @@
     <button class="custom-btn" id="customBtn" onclick="toggleCustomForm()">커스텀 카드 설정</button>
     <button class="judge-btn" onclick="judgeAndRender(true)">결과 확인</button>
 
+    <div id="tutorialOverlay">
+      <div id="tutorialPanel">
+        <div id="tutorialGreeting"></div>
+        <h2 id="tutorialTitle"></h2>
+        <div id="tutorialBody"></div>
+        <div id="tutorialAction"></div>
+        <button onclick="closeTutorialIntro()">확인</button>
+      </div>
+    </div>
+
     <div id="customForm"></div>
     <div id="duelSpotlight"></div>
     <div id="gameTable">
@@ -544,6 +554,15 @@
         1: {
           hands: [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]],
           npcPlay: [2, 4, 6, 8],
+          intro: {
+            greeting: '안녕하세요 신섯다 입니다<br>신섯다 룰에 간단히 설명드릴게요',
+            title: '1장. 가장 큰 숫자를 내면 승리한다',
+            body: [
+              '플레이어 5명은 모두 2장씩 카드를 받고 둘 중에 카드를 한 장만 제출할 수 있습니다',
+              '카드는 1부터 10까지 2장씩 있으며 1, 3, 8에는 광 카드가 1장씩 있습니다',
+            ],
+            action: '둘 중에 카드 한장을 제출해 보세요!',
+          },
           guide: '카드를 하나 골라 낸 뒤 "결과 확인"을 눌러 보세요!',
         },
       };
@@ -562,6 +581,21 @@
         });
       }
 
+      // 튜토리얼 안내창 열기/닫기
+      function showTutorialIntro(chapter) {
+        const intro = TUTORIAL_CHAPTERS[chapter].intro;
+        if (!intro) return;
+        document.getElementById('tutorialGreeting').innerHTML = intro.greeting || '';
+        document.getElementById('tutorialTitle').textContent = intro.title || '';
+        document.getElementById('tutorialBody').innerHTML = (intro.body || []).map(t => `<p>${t}</p>`).join('');
+        document.getElementById('tutorialAction').textContent = intro.action || '';
+        document.getElementById('tutorialOverlay').style.display = 'flex';
+      }
+
+      function closeTutorialIntro() {
+        document.getElementById('tutorialOverlay').style.display = 'none';
+      }
+
       // 튜토리얼 시작: 로비를 숨기고 혼자 연습하는 게임 화면으로 이동 (Firebase/멀티플레이 안 씀)
       function startTutorial(chapter = 1) {
         document.getElementById('lobbyScreen').style.display = 'none';
@@ -574,6 +608,7 @@
         document.getElementById('roundLabel').textContent = `튜토리얼 ${chapter}장`;
         dealAndRender();
         document.getElementById('result').textContent = TUTORIAL_CHAPTERS[chapter].guide;
+        showTutorialIntro(chapter);
       }
 
 
