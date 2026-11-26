@@ -626,3 +626,11 @@ button {
 #tutorialTitle { margin: 0 0 14px; font-size: 18px; }
 #tutorialBody p { margin: 0 0 10px; font-size: 14px; line-height: 1.6; }
 #tutorialAction { margin: 16px 0 6px; font-size: 15px; font-weight: bold; }
+
+#tutorialExitBtn {
+  display: none;
+  position: fixed;
+  top: 2%;
+  right: 2%;
+  z-index: 10;
+}

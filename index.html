@@ -79,6 +79,7 @@
 
   <div id="gameScreen">
     <div id="roundModeBadge">일반 모드</div>
+    <button id="tutorialExitBtn" onclick="exitTutorial()">튜토리얼 종료</button>
     <div id="roundLabel">라운드 1</div>
     <div id="scoreboard"></div>
     <div id="modeRevealBox"></div>
@@ -596,6 +597,35 @@
         document.getElementById('tutorialOverlay').style.display = 'none';
       }
 
+      // 튜토리얼 종료: 게임 상태를 비우고 로비로 돌아감
+      function exitTutorial() {
+        window.isTutorial = false;
+        window.tutorialChapter = null;
+        window.myGameId = null;
+        window.isMultiplayerGame = false;
+
+        // 튜토리얼에서 쓴 게임 상태 초기화 (이후 실제 게임에 섞이지 않게)
+        currentHands = [];
+        currentPlays = [];
+        replayPair = null;
+        extraCardsUsed = [];
+        scores = {};
+        roundScored = false;
+        roundNumber = 1;
+
+        document.getElementById('players').innerHTML = '';
+        document.getElementById('scoreboard').innerHTML = '';
+        document.getElementById('result').textContent = '';
+        document.getElementById('duelSpotlight').style.display = 'none';
+        document.getElementById('nextRoundBtn').style.display = 'none';
+        document.getElementById('roundLabel').textContent = '라운드 1';
+        document.getElementById('tutorialOverlay').style.display = 'none';
+        document.getElementById('tutorialExitBtn').style.display = 'none';
+
+        document.getElementById('gameScreen').style.display = 'none';
+        document.getElementById('lobbyScreen').style.display = 'block';
+      }
+
       // 튜토리얼 시작: 로비를 숨기고 혼자 연습하는 게임 화면으로 이동 (Firebase/멀티플레이 안 씀)
       function startTutorial(chapter = 1) {
         document.getElementById('lobbyScreen').style.display = 'none';
@@ -605,6 +635,7 @@
         window.isTutorial = true;
         window.tutorialChapter = chapter;
         window.myGameId = TUTORIAL_ME;
+        document.getElementById('tutorialExitBtn').style.display = 'block';
         document.getElementById('roundLabel').textContent = `튜토리얼 ${chapter}장`;
         dealAndRender();
         document.getElementById('result').textContent = TUTORIAL_CHAPTERS[chapter].guide;
